@@ -48,38 +48,36 @@ defmodule Mix.Tasks.Bio.Random.Dna do
   def run(options) do
     {opts, _, _} = OptionParser.parse(options, aliases: @aliases, strict: @options)
 
-    case {opts[:algorithm], opts[:seed]} do
-      {nil, nil} -> nil
-      {nil, seed} -> :rand.seed(:exsss, seed)
-      {alg, nil} -> :rand.seed(String.to_atom(alg))
-      _ -> :rand.seed(String.to_atom(opts[:algorithm]), opts[:seed])
+    algorithm = Keyword.get(opts, :algorithm, "exsss")
+    size = Keyword.get(opts, :seq_size)
+    count = Keyword.get(opts, :seq_count)
+    filename = Keyword.get(opts, :outfile, "random_sequences.txt")
+
+    case {size, count} do
+      {nil, nil} -> Mix.raise("Please provide values for --seq-size/-z and --seq-count/-c")
+      {_, nil} -> Mix.raise("Please provide value for --seq-count/-c")
+      {nil, _} -> Mix.raise("Please provide values for --seq-size/-z")
+      _ -> nil
     end
 
-    case {opts[:seq_count], opts[:seq_size]} do
-      {nil, nil} ->
-        IO.puts("Please provide options for seq-size and seq-count")
-
-      {_, nil} ->
-        IO.puts("Please provide options for seq-count")
-
-      {nil, _} ->
-        IO.puts("Please provide options for seq-size")
-
-      {count, size} ->
-        File.write(
-          opts[:outfile],
-          0..count
-          |> Enum.map(fn _ ->
-            0..size
-            |> Enum.map(fn _ ->
-              Enum.random('atgc')
-            end)
-            |> List.to_string()
-          end)
-          |> Enum.reduce("", fn line, lines ->
-            lines <> "#{line}\n"
-          end)
-        )
+    case opts[:seed] do
+      nil -> :rand.seed(String.to_atom(algorithm))
+      seed -> :rand.seed(String.to_atom(algorithm), seed)
     end
+
+    File.write(
+      filename,
+      0..count
+      |> Enum.map(fn _ ->
+        0..size
+        |> Enum.map(fn _ ->
+          Enum.random('atgc')
+        end)
+        |> List.to_string()
+      end)
+      |> Enum.reduce("", fn line, lines ->
+        lines <> "#{line}\n"
+      end)
+    )
   end
 end
