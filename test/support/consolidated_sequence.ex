@@ -1,6 +1,6 @@
 defmodule ConsolidatedSequence do
   use Bio.BaseSequence
 
-  @impl Bio.Behaviours.Sequence
+  @impl Bio.Sequential
   def converter, do: nil
 end

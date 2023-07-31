@@ -6,7 +6,7 @@ defmodule Bio.MixProject do
 
   def project do
     [
-      app: :bio_ex,
+      app: :bio_ex_sequence,
       description: describe(),
       version: @version,
       elixir: "~> 1.12",
