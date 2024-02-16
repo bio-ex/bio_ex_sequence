@@ -7,15 +7,13 @@ defmodule Bio.Sequence.DnaStrand do
       iex>"tagc" in DnaStrand.new("ttagct")
       true
 
-      iex>alias Bio.Enum, as: Bnum
-      ...>DnaStrand.new("ttagct")
-      ...>|> Bnum.map(&(&1))
-      %DnaStrand{sequence: "ttagct", length: 6}
+      iex>DnaStrand.new("ttagct")
+      ...>|> Enum.map(&(&1))
+      ~c"ttagct"
 
-      iex>alias Bio.Enum, as: Bnum
-      ...>DnaStrand.new("ttagct")
-      ...>|> Bnum.slice(2, 2)
-      %DnaStrand{sequence: "ag", length: 2}
+      iex>DnaStrand.new("ttagct")
+      ...>|> Enum.slice(2, 2)
+      ~c"ag"
   """
   use Bio.BaseSequence
 
@@ -31,8 +29,7 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaStrand do
       0 ->
         {:ok,
          sequence
-         |> Enum.chunk_every(k)
-         |> Enum.map(&Enum.join(&1, "")),
+         |> Enum.chunk_every(k),
          sequence
          |> Map.from_struct()
          |> Map.drop([:sequence])}
@@ -43,44 +40,26 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaStrand do
   end
 
   def valid?(%DnaStrand{sequence: seq}, alphabet) do
-    with {:ok, regex} <- Regex.compile("[^#{alphabet}]") do
-      not Regex.match?(regex, seq)
-    else
-      bad -> bad
-    end
+    Bio.Sequence.Alphabets.differences(seq, alphabet)
+    |> Enum.empty?()
   end
 
-  def validate(%DnaStrand{} = sequence, alphabet) do
-    # TODO: this is generalizable
-    parsed =
-      sequence
-      |> Enum.with_index()
-      |> Enum.reduce(%{}, fn {char, index}, acc ->
-        case String.contains?(alphabet, char) do
-          true ->
-            (Map.get(acc, :result, "") <> char)
-            |> then(&Map.put(acc, :result, &1))
+  def validate(%DnaStrand{} = dna, alphabet) do
+    Bio.Sequence.Alphabets.validate_against(dna.sequence, alphabet)
+    |> case do
+      {:error, _} = bad ->
+        bad
 
-          false ->
-            Map.get(acc, :errors, [])
-            |> List.insert_at(-1, {:mismatch_alpha, char, index})
-            |> then(&Map.put(acc, :errors, &1))
-        end
-      end)
-
-    case parsed do
-      %{errors: [_ | _]} ->
-        {:error, parsed.errors}
-
-      %{result: string} ->
-        given =
-          sequence
+      {:ok, sequence} ->
+        struct_data =
+          dna
           |> Map.from_struct()
           |> Map.drop([:sequence, :alphabet])
 
         {:ok,
-         DnaStrand.new(string, alphabet: alphabet, length: given.length)
-         |> Map.merge(given)
+         sequence
+         |> DnaStrand.new(alphabet: alphabet, length: struct_data.length)
+         |> Map.merge(struct_data)
          |> Map.put(:valid?, true)}
     end
   end

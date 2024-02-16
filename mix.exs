@@ -97,9 +97,6 @@ defmodule Bio.Sequence.MixProject do
         Utilities: [
           Bio.Enum,
           Bio.Polymeric
-        ],
-        Internal: [
-          Bio.AcidHelper
         ]
       ]
     ]

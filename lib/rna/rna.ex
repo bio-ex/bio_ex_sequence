@@ -30,26 +30,25 @@ defmodule Bio.Sequence.Rna do
 
       iex>RnaStrand.new("uaUUg")
       ...>|> Bio.Polymer.convert(DnaStrand)
-      {:ok, %DnaStrand{sequence: "taTTg", length: 5}}
+      {:ok, %DnaStrand{sequence: ~c"taTTg", length: 5}}
 
   This is guaranteed, so you may encode these with intention and assume that
   they are preserved across conversions.
   """
   alias Bio.Sequence.{RnaStrand, DnaStrand}
-  alias Bio.Enum, as: Bnum
-  alias Bio.Sequence.Alphabets.Rna, as: Alpha
+  alias Bio.Sequence.Alphabets
 
   @type complementable :: struct() | String.t()
 
   @complement %{
-    "a" => "u",
-    "A" => "U",
-    "u" => "a",
-    "U" => "A",
-    "g" => "c",
-    "G" => "C",
-    "c" => "g",
-    "C" => "G"
+    ?a => ?u,
+    ?A => ?U,
+    ?u => ?a,
+    ?U => ?A,
+    ?g => ?c,
+    ?G => ?C,
+    ?c => ?g,
+    ?C => ?G
   }
 
   defmodule Conversions do
@@ -62,14 +61,14 @@ defmodule Bio.Sequence.Rna do
       kmers
       |> Enum.map(fn base ->
         case base do
-          "A" -> "A"
-          "U" -> "T"
-          "G" -> "G"
-          "C" -> "C"
-          "a" -> "a"
-          "u" -> "t"
-          "g" -> "g"
-          "c" -> "c"
+          ~c"A" -> ~c"A"
+          ~c"U" -> ~c"T"
+          ~c"G" -> ~c"G"
+          ~c"C" -> ~c"C"
+          ~c"a" -> ~c"a"
+          ~c"u" -> ~c"t"
+          ~c"g" -> ~c"g"
+          ~c"c" -> ~c"c"
         end
       end)
       |> Enum.join()
@@ -89,23 +88,32 @@ defmodule Bio.Sequence.Rna do
 
   # Examples
       iex>Rna.complement("auugacgu")
-      {:ok, "uaacugca"}
+      {:ok, ~c"uaacugca"}
 
       iex>RnaStrand.new("auugacgu")
       ...>|> Rna.complement()
-      {:ok, %RnaStrand{sequence: "uaacugca", length: 8, alphabet: Alpha.common()}}
+      {:ok, %RnaStrand{sequence: ~c"uaacugca", length: 8, alphabet: Alpha.common()}}
   """
   @spec complement(complementable, keyword() | nil) ::
-          {:ok, struct()}
-          | {:error, Bio.AcidHelper.mismatch()}
+          {:ok, struct()} | {:error, Alphabets.mismatch()}
   def complement(sequence, opts \\ [])
 
-  def complement(%RnaStrand{} = sequence, opts) do
-    Bio.AcidHelper.complement(Alpha, RnaStrand, sequence, opts)
+  def complement(%RnaStrand{sequence: seq} = sequence, opts) do
+    complement(seq, opts)
+    |> case do
+      {:ok, complementary} -> {:ok, new_from(complementary, sequence)}
+      err -> err
+    end
   end
 
   def complement(sequence, opts) when is_binary(sequence) do
-    Bio.AcidHelper.complement(Alpha, sequence, opts)
+    sequence
+    |> String.to_charlist()
+    |> complement(opts)
+  end
+
+  def complement(sequence, opts) when is_list(sequence) do
+    Alphabets.complement(sequence, Alphabets.Rna, opts)
   end
 
   @doc """
@@ -117,24 +125,40 @@ defmodule Bio.Sequence.Rna do
 
   # Examples
       iex>Rna.reverse_complement("auugacgu")
-      "acgucaau"
+      ~c"acgucaau"
 
       iex>RnaStrand.new("auugacgu")
       ...>|> Rna.reverse_complement()
-      %RnaStrand{sequence: "acgucaau", length: 8}
+      %RnaStrand{sequence: ~c"acgucaau", length: 8, alphabet: Alpha.common()}
   """
   @spec reverse_complement(sequence :: complementable) :: complementable
   def reverse_complement(%RnaStrand{} = sequence) do
     sequence
-    |> Bnum.map(&Map.get(@complement, &1))
-    |> Bnum.reverse()
+    |> Enum.map(&Map.get(@complement, &1))
+    |> Enum.reverse()
+    |> new_from(sequence)
   end
 
   def reverse_complement(sequence) when is_binary(sequence) do
     sequence
-    |> String.graphemes()
+    |> String.to_charlist()
+    |> reverse_complement()
+  end
+
+  def reverse_complement(sequence) when is_list(sequence) do
+    sequence
     |> Enum.map(&Map.get(@complement, &1))
     |> Enum.reverse()
-    |> Enum.join()
+  end
+
+  defp new_from(new_seq, old) do
+    old
+    |> Map.from_struct()
+    |> Map.drop([:sequence])
+    |> Map.update(:alphabet, Alphabets.Rna.common(), fn
+      nil -> Alphabets.Rna.common()
+      val -> val
+    end)
+    |> then(&RnaStrand.new(new_seq, Map.to_list(&1)))
   end
 end

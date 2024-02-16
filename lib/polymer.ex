@@ -5,7 +5,7 @@ defmodule Bio.Polymer do
   The sequences that this will work with must define an implementation for the
   `Bio.Polymeric` protocol. This is then used with the definition of
   the `to/1` callbacks for the `Bio.Convertible` behaviour. These will
-  be given the kmer enumeration that they define with that function.
+  be given the "kmer" enumeration that they define with that function.
 
   This module wraps the logic of accessing a given polymer's defined
   conversions. The primary idea is that I wanted to expose the ability to
@@ -16,7 +16,7 @@ defmodule Bio.Polymer do
 
       iex>dna = DnaStrand.new("ttagccgt", label: "a label")
       ...>Bio.Polymer.convert(dna, RnaStrand)
-      {:ok, %RnaStrand{sequence: "uuagccgu", length: 8, label: "a label"}}
+      {:ok, %RnaStrand{sequence: ~c"uuagccgu", length: 8, label: "a label"}}
 
   But, and this is the important part, other conversions are not well defined by
   defaults. For example:
@@ -48,38 +48,41 @@ defmodule Bio.Polymer do
       ...>           |> Map.to_list()
       ...>    knumerable
       ...>    |> Enum.map(&to_codon/1)
-      ...>    |> Enum.join("")
+      ...>    |> List.flatten()
       ...>    |> DnaStrand.new(data)
       ...>  end
       ...>
       ...>  defp to_codon(aa) do
-      ...>    case aa do
-      ...>      "a" -> "gcn"
-      ...>      "r" -> "cgn"
-      ...>      "n" -> "aay"
-      ...>      "d" -> "gay"
-      ...>      "c" -> "tgy"
-      ...>      "e" -> "gar"
-      ...>      "q" -> "car"
-      ...>      "g" -> "ggn"
-      ...>      "h" -> "cay"
-      ...>      "i" -> "ath"
-      ...>      "l" -> "ctn"
-      ...>      "k" -> "aar"
-      ...>      "m" -> "atg"
-      ...>      "f" -> "tty"
-      ...>      "p" -> "ccn"
-      ...>      "s" -> "tcn"
-      ...>      "t" -> "acn"
-      ...>      "w" -> "tgg"
-      ...>      "y" -> "tay"
-      ...>      "v" -> "gtn"
+      ...>    case code_point(aa) do
+      ...>      ?a -> ~c"gcn"
+      ...>      ?r -> ~c"cgn"
+      ...>      ?n -> ~c"aay"
+      ...>      ?d -> ~c"gay"
+      ...>      ?c -> ~c"tgy"
+      ...>      ?e -> ~c"gar"
+      ...>      ?q -> ~c"car"
+      ...>      ?g -> ~c"ggn"
+      ...>      ?h -> ~c"cay"
+      ...>      ?i -> ~c"ath"
+      ...>      ?l -> ~c"ctn"
+      ...>      ?k -> ~c"aar"
+      ...>      ?m -> ~c"atg"
+      ...>      ?f -> ~c"tty"
+      ...>      ?p -> ~c"ccn"
+      ...>      ?s -> ~c"tcn"
+      ...>      ?t -> ~c"acn"
+      ...>      ?w -> ~c"tgg"
+      ...>      ?y -> ~c"tay"
+      ...>      ?v -> ~c"gtn"
       ...>    end
       ...>  end
+      ...>
+      ...>  defp code_point([p]), do: p
+      ...>
       ...>end
       ...>amino = AminoAcid.new("maktg", label: "polypeptide-∂")
       ...>Bio.Polymer.convert(amino, DnaStrand, conversion: CompressedAminoConversion)
-      {:ok, %DnaStrand{sequence: "atggcnaaracnggn", length: 15, label: "polypeptide-∂"}}
+      {:ok, %DnaStrand{sequence: ~c"atggcnaaracnggn", length: 15, label: "polypeptide-∂"}}
 
   This is made possible because of the simple implementation of the
   `Bio.Polymeric` interface for the `Bio.Sequence.AminoAcid`. If
@@ -113,7 +116,7 @@ defmodule Bio.Polymer do
 
       iex>dna = DnaStrand.new("ttagccgt", label: "a label")
       ...>Bio.Polymer.convert(dna, RnaStrand)
-      {:ok, %RnaStrand{sequence: "uuagccgu", length: 8, label: "a label"}}
+      {:ok, %RnaStrand{sequence: ~c"uuagccgu", length: 8, label: "a label"}}
 
   Given a struct and module with unknown conversions:
 

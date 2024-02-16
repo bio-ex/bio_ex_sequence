@@ -2,15 +2,14 @@ defmodule Bio.Sequence.DnaDoubleStrand do
   @behaviour Bio.Sequential
 
   alias Bio.Sequence.{Dna, DnaStrand, RnaDoubleStrand, RnaStrand}
-  alias Bio.Enum, as: Bnum
   alias Bio.Sequence.Alphabets.Dna, as: DnAlpha
 
   @moduledoc """
   A representative struct for Double Stranded DNA polymers.
   """
 
-  defstruct top_strand: DnaStrand.new("", length: 0),
-            bottom_strand: DnaStrand.new("", length: 0),
+  defstruct top_strand: DnaStrand.new(~c"", length: 0),
+            bottom_strand: DnaStrand.new(~c"", length: 0),
             complement_offset: 0,
             label: nil,
             alphabet: nil,
@@ -30,7 +29,15 @@ defmodule Bio.Sequence.DnaDoubleStrand do
   overhang on the 3' side.
   """
   @impl Bio.Sequential
-  def new(top_strand, opts \\ []) when is_binary(top_strand) do
+  def new(top_strand, opts \\ [])
+
+  def new(top_strand, opts) when is_binary(top_strand) do
+    top_strand
+    |> String.to_charlist()
+    |> new(opts)
+  end
+
+  def new(top_strand, opts) when is_list(top_strand) do
     label = Keyword.get(opts, :label)
     alphabet = Keyword.get(opts, :alphabet, DnAlpha.iupac())
     offset = Keyword.get(opts, :complement_offset, 0)
@@ -41,7 +48,8 @@ defmodule Bio.Sequence.DnaDoubleStrand do
     cond do
       given_bottom == nil ->
         top
-        |> Bnum.slice(offset, top.length)
+        |> Enum.slice(offset, top.length)
+        |> DnaStrand.new()
         |> Dna.complement(alphabet: alphabet)
         |> case do
           {:error, mismatches} ->
@@ -89,22 +97,23 @@ defmodule Bio.Sequence.DnaDoubleStrand do
 
     defp to_rna({:ok, kmers, data}, module) do
       kmers
-      |> Enum.reduce("", fn {top, _}, strand ->
-        strand <> rna(top)
+      |> Enum.reduce([], fn {[top], _}, strand ->
+        [rna(top) | strand]
       end)
+      |> Enum.reverse()
       |> new_sequence(data, module)
     end
 
     defp rna(base) do
       case base do
-        "A" -> "A"
-        "T" -> "U"
-        "G" -> "G"
-        "C" -> "C"
-        "a" -> "a"
-        "t" -> "u"
-        "g" -> "g"
-        "c" -> "c"
+        ?A -> ?A
+        ?T -> ?U
+        ?G -> ?G
+        ?C -> ?C
+        ?a -> ?a
+        ?t -> ?u
+        ?g -> ?g
+        ?c -> ?c
       end
     end
 
@@ -129,7 +138,11 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
         k
       ) do
     total_span = top.length + abs(offset)
-    spacing = 1..offset |> Enum.reduce([], fn _, acc -> [" " | acc] end)
+    # TODO: needs to be an empty? char?
+    # Alternatively, we can encode the overlapping space with nil entries in a
+    # charlist, maybe? Then we can implement a String.Chars or something to make
+    # them look nicer.
+    spacing = 1..offset |> Enum.reduce([], fn _, acc -> [nil | acc] end)
 
     {top, bottom} =
       cond do
@@ -148,11 +161,9 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
         {:ok,
          Enum.zip(
            top
-           |> Enum.chunk_every(k)
-           |> Enum.map(&Enum.join(&1, "")),
+           |> Enum.chunk_every(k),
            bottom
            |> Enum.chunk_every(k)
-           |> Enum.map(&Enum.join(&1, ""))
          ), %{label: dna_double.label, complement_offset: dna_double.complement_offset}}
 
       _ ->
@@ -184,12 +195,13 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
     kmers
     |> Enum.map(fn {top, bottom} ->
       case top do
-        "" ->
+        nil ->
           true
 
         _ ->
           {:ok, check} = Bio.Sequence.Alphabets.Dna.complement(top, alphabet)
-          bottom == check
+
+          bottom == [check]
       end
     end)
     |> Enum.all?()

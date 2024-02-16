@@ -3,7 +3,7 @@ defmodule Bio.Sequence do
   `Bio.Sequence` is the basic building block of the sequence types.
 
   The core concept here is that a polymer is a sequence of elements encoded as a
-  binary. This is stored in the base `%Bio.Sequence{}` struct, which has both a
+  charlist. This is stored in the base `%Bio.Sequence{}` struct, which has both a
   `sequence` and `length` field, and may carry a `label` and `alphabet` field as
   well.
 
@@ -22,26 +22,12 @@ defmodule Bio.Sequence do
 
       iex>Bio.Sequence.new("agmctbo")
       ...>|> Enum.map(&(&1))
-      ["a", "g", "m", "c", "t", "b", "o"]
+      [?a, ?g, ?m, ?c, ?t, ?b, ?o]
 
-  My hope is that this alleviates some of the pain of coming from a language
-  where strings are slightly more complex objects.
-
-  Additionally, you should look at the `Bio.Enum` module for dealing with cases
-  where the `Enum` default implementation results in odd behavior. It also
-  implements certain behaviors like returning the same type for functions:
-
-      iex>Bio.Sequence.new("agmctbo")
-      ...>|> Enum.slice(2, 2)
-      'mc'
-
-
-  vs
-
-      iex>alias Bio.Enum, as: Bnum
-      ...>Bio.Sequence.new("agmctbo")
-      ...>|> Bnum.slice(2, 2)
-      %Bio.Sequence{sequence: "mc", length: 2}
+  The use of charlists eases the pain of implementing a sane Enumerable protocol
+  for these objects. However, it is a bit of a stumbling block from time to
+  time. Where it makes sense, I convert things to strings, as in
+  `Bio.Sequence.Alphabets.validate_against/2`.
   """
   use Bio.BaseSequence
 

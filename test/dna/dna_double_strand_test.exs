@@ -14,22 +14,22 @@ defmodule Sequence.DnaDoubleStrandTest do
       assert kmers(seq, 1) ==
                {:ok,
                 [
-                  {"t", "a"},
-                  {"t", "a"},
-                  {"a", "t"},
-                  {"a", "t"},
-                  {"g", "c"},
-                  {"g", "c"},
-                  {"c", "g"},
-                  {"c", "g"},
-                  {"t", "a"},
-                  {"t", "a"},
-                  {"a", "t"},
-                  {"a", "t"},
-                  {"g", "c"},
-                  {"g", "c"},
-                  {"c", "g"},
-                  {"c", "g"}
+                  {~c"t", ~c"a"},
+                  {~c"t", ~c"a"},
+                  {~c"a", ~c"t"},
+                  {~c"a", ~c"t"},
+                  {~c"g", ~c"c"},
+                  {~c"g", ~c"c"},
+                  {~c"c", ~c"g"},
+                  {~c"c", ~c"g"},
+                  {~c"t", ~c"a"},
+                  {~c"t", ~c"a"},
+                  {~c"a", ~c"t"},
+                  {~c"a", ~c"t"},
+                  {~c"g", ~c"c"},
+                  {~c"g", ~c"c"},
+                  {~c"c", ~c"g"},
+                  {~c"c", ~c"g"}
                 ], %{complement_offset: 0, label: "dna"}}
     end
 
@@ -45,14 +45,14 @@ defmodule Sequence.DnaDoubleStrandTest do
       assert kmers(seq, 2) ==
                {:ok,
                 [
-                  {"tt", "aa"},
-                  {"aa", "tt"},
-                  {"gg", "cc"},
-                  {"cc", "gg"},
-                  {"tt", "aa"},
-                  {"aa", "tt"},
-                  {"gg", "cc"},
-                  {"cc", "gg"}
+                  {~c"tt", ~c"aa"},
+                  {~c"aa", ~c"tt"},
+                  {~c"gg", ~c"cc"},
+                  {~c"cc", ~c"gg"},
+                  {~c"tt", ~c"aa"},
+                  {~c"aa", ~c"tt"},
+                  {~c"gg", ~c"cc"},
+                  {~c"cc", ~c"gg"}
                 ], %{label: "dna", complement_offset: 0}}
     end
 
@@ -62,10 +62,10 @@ defmodule Sequence.DnaDoubleStrandTest do
       assert kmers(seq, 3) ==
                {:ok,
                 [
-                  {"ttt", "aaa"},
-                  {"aaa", "ttt"},
-                  {"ggg", "ccc"},
-                  {"ccc", "ggg"}
+                  {~c"ttt", ~c"aaa"},
+                  {~c"aaa", ~c"ttt"},
+                  {~c"ggg", ~c"ccc"},
+                  {~c"ccc", ~c"ggg"}
                 ], %{label: "dna", complement_offset: 0}}
     end
 
@@ -75,10 +75,10 @@ defmodule Sequence.DnaDoubleStrandTest do
       assert kmers(seq, 3) ==
                {:ok,
                 [
-                  {"ttt", "   "},
-                  {"aaa", "ttt"},
-                  {"ggg", "ccc"},
-                  {"ccc", "ggg"}
+                  {~c"ttt", [nil, nil, nil]},
+                  {~c"aaa", ~c"ttt"},
+                  {~c"ggg", ~c"ccc"},
+                  {~c"ccc", ~c"ggg"}
                 ], %{label: "dna", complement_offset: 3}}
     end
 
@@ -93,11 +93,11 @@ defmodule Sequence.DnaDoubleStrandTest do
       assert kmers(seq, 3) ==
                {:ok,
                 [
-                  {"ttt", "   "},
-                  {"aaa", "ttt"},
-                  {"ggg", "ccc"},
-                  {"ccc", "ggg"},
-                  {"   ", "atg"}
+                  {~c"ttt", [nil, nil, nil]},
+                  {~c"aaa", ~c"ttt"},
+                  {~c"ggg", ~c"ccc"},
+                  {~c"ccc", ~c"ggg"},
+                  {[nil, nil, nil], ~c"atg"}
                 ], %{label: "dna", complement_offset: 3}}
     end
   end
@@ -114,19 +114,19 @@ defmodule Sequence.DnaDoubleStrandTest do
 
       assert seq == %Subject{
                bottom_strand: %DnaStrand{
-                 alphabet: "ACGTNacgtn",
+                 alphabet: ~c"ACGTNacgtn",
                  label: nil,
                  length: 10,
-                 sequence: "ttaaccggnn",
+                 sequence: ~c"ttaaccggnn",
                  valid?: true
                },
                complement_offset: 0,
                label: nil,
                top_strand: %DnaStrand{
-                 alphabet: "ACGTNacgtn",
+                 alphabet: ~c"ACGTNacgtn",
                  label: nil,
                  length: 10,
-                 sequence: "aattggccnn",
+                 sequence: ~c"aattggccnn",
                  valid?: true
                },
                valid?: true,
@@ -136,7 +136,7 @@ defmodule Sequence.DnaDoubleStrandTest do
 
     test "errors with no alphabet" do
       res =
-        Subject.new("aattggcc", alphabet: nil)
+        Subject.new(~c"aattggcc", alphabet: nil)
         |> Bio.Polymer.validate()
 
       assert res == {:error, :no_alpha}
@@ -154,13 +154,13 @@ defmodule Sequence.DnaDoubleStrandTest do
 
       assert seq == %Subject{
                top_strand: %DnaStrand{
-                 sequence: "aattggcc",
+                 sequence: ~c"aattggcc",
                  length: 8,
                  alphabet: Alpha.common(),
                  valid?: true
                },
                bottom_strand: %DnaStrand{
-                 sequence: "ttaaccgg",
+                 sequence: ~c"ttaaccgg",
                  length: 8,
                  alphabet: Alpha.common(),
                  valid?: true
