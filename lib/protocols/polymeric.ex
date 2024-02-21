@@ -1,6 +1,21 @@
+# TODO: Re-write this for clarity
+# For example, wtf does this mean?
+# > Instead, it looks to see if there can be complete aggregates, even if they're
+# > paired with empty space.
+# TODO: ensure links to docs make sense
+# TODO: can we skip some of the implementation gook by simply implementing the
+# the protocol for List? That makes sense now... Alternatively, we could have
+# also done that for Binary, but... there's a lot of different ways this could
+# be dealt with. Namely, the double strands always throw a wrench
 defprotocol Bio.Polymeric do
   @moduledoc """
-  Define Polymeric interface of a sequence type.
+  Define Polymeric protocol interface of a sequence type.
+
+  You can think of this protocol as defining what it means for something to be a
+  polymer. In the sense of a programming environment, a polymer is a collection
+  of monomers which may be reasonably thought about according to certain rules
+  against their k-mers. That is, k length subunits are expected to be meaningful
+  (as in DNA <-> RNA <-> Amino Acid conversion).
 
   The `Bio.Polymeric` protocol allows us to define implementations
   of a `kmers/2` function. This is part of the approach to translating different
@@ -8,11 +23,11 @@ defprotocol Bio.Polymeric do
 
   The idea is that defining how a sequence is sub-divided into k-mers for
   enumeration is something that must occur for specific conversions. However,
-  it's also something that you would not necessarily want to have to do every
-  single time you applied the conversion.
+  it's also something that would be tedious to implement at every conversion's
+  implementation.
 
   Essentially, each structural definition of a sequence will have some
-  meaningful way of splitting it into a Kmer enumeration. This is used in all
+  meaningful way of splitting it into a k-mer enumeration. This is used in all
   forms of computation, largely though, in conversions. For example, DNA -> RNA
   conversions require element-wise (k=1) conversion functions. Whereas, RNA ->
   Amino Acid requires codon-wise (k=3).
@@ -21,7 +36,7 @@ defprotocol Bio.Polymeric do
   and `Bio.Polymer.convert/3`, we define this as a protocol.
 
   For a valid return, the consideration should be:
-  1. The enumerable returned (`Enum.t()`) should contain the information
+  1. The enumerable returned (`Enumerable`) should contain the information
   required to perform a conversion. Examples can be found in the
   `Bio.Sequence.DnaStrand` and `Bio.Sequence.DnaDoubleStrand` modules. There,
   you'll see that for a simple sequence, it makes sense to simple iterate the
@@ -33,7 +48,7 @@ defprotocol Bio.Polymeric do
   to the newly constructed type.
 
   The error mode for various sequences will vary, but generally the idea of
-  mismatching the sequence length to the `k` value will hold. For the build in
+  mismatching the sequence length to the `k` value will hold. For the built in
   `Bio.Sequence.DnaStrand`, this is merely the even division. For the
   `Bio.Sequence.DnaDoubleStrand` it's more complicated. That type assumes that
   you want to see pairs of aggregated values (top/bottom), but they may be
@@ -82,7 +97,7 @@ defprotocol Bio.Polymeric do
       ...>|> Bio.Polymer.validate()
       {
         :error,
-        [{:mismatch_alpha, "n", 4}, {:mismatch_alpha, "n", 5}]
+        [{:mismatch_alpha, "n", 4, Alpha.common()}, {:mismatch_alpha, "n", 5, Alpha.common()}]
       }
 
       iex>alias Bio.Sequence.Alphabets.Dna, as: Alpha
@@ -91,9 +106,9 @@ defprotocol Bio.Polymeric do
       {
         :ok,
         %Bio.Sequence.DnaStrand{
-          sequence: "atgcnn",
+          sequence: ~c"atgcnn",
           length: 6,
-          alphabet: "ACGTNacgtn",
+          alphabet: ~c"ACGTNacgtn",
           valid?: true
         }
       }

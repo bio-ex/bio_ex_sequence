@@ -1,3 +1,6 @@
+# TODO: link this to the conversions guide
+# TODO: think through how `dump` might work with `Code.loaded?` for
+# inter-package dependencies.
 defmodule Bio.Sequential do
   @moduledoc """
   How a "sequence" ought to comport itself.
@@ -59,6 +62,11 @@ defmodule Bio.Sequential do
   Given a struct, returns the String.t() line for a FASTA file
 
   This will be called from within `Bio.IO.Fasta.write/3`
+
+  > #### Note {: .neutral}
+  > This may be removed in the future to make way for a `dump` function which
+  > can be given various formats. Those formats would then require various
+  > implementations from external packages to help decouple things.
   """
   @callback fasta_line(given :: struct()) :: line :: String.t()
 end

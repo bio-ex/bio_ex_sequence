@@ -1,3 +1,4 @@
+# TODO: Move the conversions information into a guide in the docs
 defmodule Bio.Polymer do
   @moduledoc """
   Deals with conversions between polymers.

@@ -4,6 +4,8 @@ defmodule Sequence.AlphabetsTest do
   alias Bio.Sequence.Alphabets, as: Subject
   alias Bio.Sequence.Alphabets.{Dna, Rna, AminoAcid}
 
+  doctest Subject
+
   describe "base module" do
     test "validate_against works with arbitrary values (sad)" do
       assert {:error, [{:mismatch_alpha, "b", 1, ~c"adc"}]} =
@@ -27,6 +29,16 @@ defmodule Sequence.AlphabetsTest do
 
     test "complement is generalized for rna" do
       assert {:ok, ~c"UACGuacg"} = Subject.complement(~c"AUGCaugc", Rna)
+    end
+
+    test "complement raises for bad alphabet type" do
+      assert_raise(ArgumentError, fn ->
+        Subject.complement(~c"AUGCaugc", Rna, alphabet: "abcd")
+      end)
+
+      assert_raise(ArgumentError, fn ->
+        Subject.complement(~c"AUGCaugc", Rna, alphabet: :abcd)
+      end)
     end
   end
 

@@ -5,20 +5,9 @@ defmodule Bio.BaseSequence do
   Calling `use Bio.BaseSequence` will generate a simple struct in the calling
   module, as well as the implementation for the `Enumerable` protocol.
 
-  Because the `Enum` module makes certain assumptions about the data that it is
-  given, we cannot trust that the functions therein will always behave how it
-  makes the most sense. As an example, there is no way to ensure that
-  `Enum.slide/3` returns anything other than a list. I believe that it makes
-  sense for it to return the enumerable type, so you would get e.g. a
-  `Bio.Sequence.DnaStrand` back.
-
-  With that said, many of the `Enum` module's functions _shouldn't_ make
-  assumptions. This is largely idiosynctratic, and so instead of trying to
-  ham-fist the `Enum` functions to work, I just wrapped them up with `Bio.Enum`.
-
-  The implementations in `Bio.Enum` rely on the `Enum` functions to work, but
-  they go the extra mile in terms of returning things that seem to make the most
-  sense. See the documentation of `Bio.Enum` for more on that.
+  The `Enum` module's functions should all work, however, take care to note
+  which of them will be given a charlist vs a code point. For more
+  clarification, see the examples in `Bio.Sequence`.
 
   This module will also cause `new/2` to be defined. This function takes a
   sequence as well as the keywords `:label` and `:length`. For more examples of
@@ -89,7 +78,9 @@ defmodule Bio.BaseSequence do
           |> then(&member?(poly, &1))
         end
 
-        # TODO: re-implement in Rust
+        # TODO: re-implement in Rust and benchmark memberships
+        # This is a pretty common task. Rust makes the CPU bound part fast, and
+        # then we can use a agent/genserver to make the parallelization easy.
         def member?(poly, element) when is_list(element) do
           element_len = Enum.count(element)
 

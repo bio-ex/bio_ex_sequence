@@ -1,3 +1,4 @@
+# TODO: point the conversion discussion to the new guide
 defmodule Bio.Sequence.AminoAcid do
   @moduledoc """
   Amino acids are modeled as simple sequences using `Bio.BaseSequence`.

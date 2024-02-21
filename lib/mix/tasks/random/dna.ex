@@ -1,3 +1,7 @@
+# TODO: DON'T OUTPUT TO A FILE BY DEFAULT YOU BUTTFACE
+# Be a good *nix citizen and allow people to pipe your output wherever they want
+# sir.
+# TODO: provide nicer errors
 defmodule Mix.Tasks.Bio.Random.Dna do
   @moduledoc """
   Bio.Random.Dna will generate random sequences of DNA. Sequences are written to
@@ -71,7 +75,7 @@ defmodule Mix.Tasks.Bio.Random.Dna do
       |> Enum.map(fn _ ->
         0..size
         |> Enum.map(fn _ ->
-          Enum.random('atgc')
+          Enum.random(~c"atgc")
         end)
         |> List.to_string()
       end)

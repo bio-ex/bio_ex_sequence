@@ -1,4 +1,3 @@
-# TODO: add some docs about complementation
 defmodule Bio.Sequence.Alphabets do
   @moduledoc """
   Alphabets relevant to the sequences, coding schemes are expressed in
@@ -105,20 +104,50 @@ defmodule Bio.Sequence.Alphabets do
   X ::=  ANY
   ```
   """
+  @typedoc """
+  An `alphabet` is any character list which defines a desired set of character
+  values. These should be ASCII characters, and are allowed to range across any
+  value.
+  """
   @type alphabet :: charlist()
+
+  @typedoc """
+  A `sequence` is any charlist comprised of the values, or expected to be
+  comprised of the values of an `alphabet`.
+  """
   @type sequence :: charlist()
+  @typedoc """
+  An `index` in this context is the index of a character's position within a
+  `sequence`.
+  """
   @type index :: integer()
+  @typedoc """
+  Because `sequence` and `alphabet` are defined as charlists, individual
+  characters are [code
+  points](https://hexdocs.pm/elixir/binaries-strings-and-charlists.html#unicode-and-code-points).
+  Where it makes sense, these are cast to strings for the purpose of debugging,
+  but you may occasionally see them as integers in output. When writing code,
+  you should use the `?` operator to allow matching on code point literals, per
+  the linked documentation.
+  """
   @type character :: integer()
-  @type mismatch :: [{:mismatch_alpha, character, index, alphabet}]
+  @typedoc """
+  A `character_repr` is a String representation of a character that is returned
+  in case of error modes where inspecting the output means that you would desire
+  to see the encoded character as opposed to the code point.
+  """
+  @type character_repr :: String.t()
+  @type mismatch :: {:mismatch_alpha, character_repr(), index(), alphabet()}
+  @type mismatches :: [mismatch()]
 
   @doc """
   Run validation of a charlist against a charlist alphabet.
 
-  Primarily an internal function, this will return the character and index of a
-  mismatch between the "sequence" and the "alphabet". Left completely general
-  for loose coupling.
+  This is a low-level function which may be used when implementing e.g.
+  conversions/validations in your polymers. For examples, see the implementation
+  of `Bio.Polymeric` within the `Bio.Sequence.DnaStrand` module.
   """
-  @spec validate_against(sequence(), alphabet()) :: {:ok, sequence()} | {:error, mismatch()}
+  @spec validate_against(sequence(), alphabet()) :: {:ok, sequence()} | {:error, mismatches()}
   def validate_against(sequence_chars, alphabet) do
     sequence_chars
     |> Enum.with_index()
@@ -141,8 +170,13 @@ defmodule Bio.Sequence.Alphabets do
   For example, if you want to determine if a sequence conforms to an alphabet,
   you can pass them in as:
 
-     iex>Bio.Sequence.Alphabets.differences(~c"MAGICSAUX", Bio.Sequence.Alphabets.AminoAcid.common())
-     MapSet.new([~c"X"])
+      iex>alias Bio.Sequence.Alphabets
+      ...>Alphabets.differences(~c"MAAKTGZKNMA", Alphabets.AminoAcid.common())
+      MapSet.new([?Z])
+
+  This is used for determining if a sequence is valid according to the described
+  `alphabet`. The runtime is necessarily `O(n*m)` for sequence length `n` and
+  alphabet length `m`.
   """
   @spec differences(charlist(), charlist()) :: MapSet.t()
   def differences(a, b) do
@@ -150,15 +184,22 @@ defmodule Bio.Sequence.Alphabets do
   end
 
   @doc """
-  Return the complement of a charlist according to it's alphabet and module.
+  Return the complement of a charlist according to it's `alphabet` and `module`.
 
-  For internal use or use implementing polymeric conversions.
+  This will build the complement of a sequence by inferring the alphabet to pull
+  in from the `alpha_mod` module. An `alpha_mod` need only define a `common/0`,
+  used in case an alphabet is not provided, as well as a `complement/2`
+  function.
 
-  The mismatched characters are cast to string to make debugging easier.
+  The `complement/2` function takes a character or charlist and an alphabet,
+  returning the complement.
+
+  Options may include the alphabet to be used, which should be a charlist.
   """
-  @spec complement(sequence(), module(), Keyword.t()) :: {:ok, sequence()} | {:error, mismatch()}
+  @spec complement(sequence(), module(), Keyword.t()) ::
+          {:ok, sequence()} | {:error, mismatches()}
   def complement(sequence, alpha_mod, opts \\ []) when is_list(sequence) do
-    alphabet = get_alpha({nil, Keyword.get(opts, :alphabet)}, alpha_mod)
+    alphabet = get_alpha(opts, alpha_mod)
 
     comps =
       sequence
@@ -202,11 +243,16 @@ defmodule Bio.Sequence.Alphabets do
 
   @doc false
   defp get_alpha(opts, alpha_mod) do
-    case opts do
-      {nil, nil} -> apply(alpha_mod, :common, [])
-      {nil, opted} -> opted
-      {built, nil} -> built
-      {_built, opted} -> opted
+    case Keyword.get(opts, :alphabet) do
+      nil ->
+        apply(alpha_mod, :common, [])
+
+      [_ | _] = given_list ->
+        given_list
+
+      otherwise ->
+        raise ArgumentError,
+              "alphabet for complement must be a charlist, received #{inspect(otherwise)}"
     end
   end
 

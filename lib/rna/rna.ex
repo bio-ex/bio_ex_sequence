@@ -1,3 +1,4 @@
+# TODO: DNA/RNA conversions need to handle ambiguous codons
 defmodule Bio.Sequence.Rna do
   @moduledoc """
   A module for working with RNA.

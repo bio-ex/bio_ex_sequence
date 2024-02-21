@@ -103,7 +103,10 @@ defmodule Bio.Sequence.MixProject do
   end
 
   def extras() do
-    []
+    [
+      "./guides/Implementing Polymeric Types.md",
+      "./guides/Implementing Polymer Conversions.md"
+    ]
   end
 
   defp group_for_function(group), do: {String.to_atom(group), &(&1[:group] == group)}

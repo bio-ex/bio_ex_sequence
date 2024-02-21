@@ -1,3 +1,7 @@
+# TODO: look into how best to document the options (look at e.g. ecto)
+# TODO: Do a better job explaining the purpose of the offset
+# TODO: expand what validity means and add tests
+# TODO: Look at implementing a String.Chars approach for nicer looking output
 defmodule Bio.Sequence.DnaDoubleStrand do
   @behaviour Bio.Sequential
 
@@ -82,8 +86,6 @@ defmodule Bio.Sequence.DnaDoubleStrand do
     end
   end
 
-  # TODO: need to expand conversions to deal with alphabets
-  # NOTE: for now, just built ins that are supplied by the struct
   defmodule Conversions do
     @moduledoc false
     use Bio.Convertible do
@@ -138,10 +140,6 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
         k
       ) do
     total_span = top.length + abs(offset)
-    # TODO: needs to be an empty? char?
-    # Alternatively, we can encode the overlapping space with nil entries in a
-    # charlist, maybe? Then we can implement a String.Chars or something to make
-    # them look nicer.
     spacing = 1..offset |> Enum.reduce([], fn _, acc -> [nil | acc] end)
 
     {top, bottom} =
@@ -171,13 +169,12 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
     end
   end
 
-  # TODO: expand what validity means and add tests
   @doc """
   A DnaDoubleStrand validity check
 
   In order for a DnaDoubleStrand to be valid, it needs to meet three criteria:
   1. All the elements are within the alphabet
-  2. All the elements are complements for that alphabet's definition
+  2. All the element pairs are complements for that alphabet's definition
   3. Both strands have the same alphabet
   """
   def valid?(
