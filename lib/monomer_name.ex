@@ -3,8 +3,11 @@ defmodule Bio.Sequence.MonomerName do
   Get the full name for a given monomer.
 
   # Example
-      iex>MonomerName.nucleic_acid("a")
+      iex>MonomerName.dna("a")
       "adenine"
+
+      iex>MonomerName.rna("u")
+      "uracil"
 
       iex>MonomerName.amino_acid("a")
       "alanine"
@@ -13,38 +16,6 @@ defmodule Bio.Sequence.MonomerName do
   @type monomer() :: integer() | String.t()
   @type name() :: String.t()
 
-  # TODO: add ambiguous
-  # A ::= Adenine
-  # C ::= Cytosine
-  # G ::= Guanine
-  # T ::= Thymine
-  # R ::= A | G
-  # Y ::= C | T
-  # S ::= G | C
-  # W ::= A | T
-  # K ::= G | T
-  # M ::= A | C
-  # B ::= S | T (¬A)
-  # D ::= R | T (¬C)
-  # H ::= M | T (¬G)
-  # V ::= M | G (¬T)
-  # N ::= ANY
-  # RNA
-  # A ::= Adenine
-  # C ::= Cytosine
-  # G ::= Guanine
-  # U ::= Uracil
-  # R ::= A | G
-  # Y ::= C | U
-  # S ::= G | C
-  # W ::= A | U
-  # K ::= G | U
-  # M ::= A | C
-  # B ::= S | U (¬A)
-  # D ::= R | U (¬C)
-  # H ::= M | U (¬G)
-  # V ::= M | G (¬U)
-  # N ::= ANY
   @dna_names %{
     ?a => "adenine",
     ?c => "cytosine",
@@ -53,10 +24,50 @@ defmodule Bio.Sequence.MonomerName do
     ?A => "adenine",
     ?C => "cytosine",
     ?G => "guanine",
-    ?T => "thymine"
+    ?T => "thymine",
+    ?r => "adenine or guanine",
+    ?y => "cytosine or thymine",
+    ?s => "guanine or cytosine",
+    ?w => "adenine or thymine",
+    ?k => "guanine or thymine",
+    ?m => "adenine or cytosine",
+    ?R => "adenine or guanine",
+    ?Y => "cytosine or thymine",
+    ?S => "guanine or cytosine",
+    ?W => "adenine or thymine",
+    ?K => "guanine or thymine",
+    ?M => "adenine or cytosine",
+    ?b => "guanine, cytosine, or thymine (not adenine)",
+    ?d => "adenine, guanine, or thymine (not cytosine)",
+    ?h => "adenine, cytosine, or thymine (not guanine)",
+    ?v => "adenine, cytosine, or guanine (not thymine)",
+    ?B => "guanine, cytosine, or thymine (not adenine)",
+    ?D => "adenine, guanine, or thymine (not cytosine)",
+    ?H => "adenine, cytosine, or thymine (not guanine)",
+    ?V => "adenine, cytosine, or guanine (not thymine)",
+    ?n => "any",
+    ?N => "any"
   }
 
-  @nucleic_acid_names Map.merge(@dna_names, %{?u => "uracil", ?U => "uracil"})
+  @rna_names Map.merge(@dna_names, %{
+    ?u => "uracil",
+    ?U => "uracil",
+    ?y => "cytosine or uracil",
+    ?w => "adenine or uracil",
+    ?k => "guanine or uracil",
+    ?Y => "cytosine or uracil",
+    ?W => "adenine or uracil",
+    ?K => "guanine or uracil",
+    ?b => "guanine, cytosine, or uracil (not adenine)",
+    ?d => "adenine, guanine, or uracil (not cytosine)",
+    ?h => "adenine, cytosine, or uracil (not guanine)",
+    ?v => "adenine, cytosine, or guanine (not uracil)",
+    ?B => "guanine, cytosine, or uracil (not adenine)",
+    ?D => "adenine, guanine, or uracil (not cytosine)",
+    ?H => "adenine, cytosine, or uracil (not guanine)",
+    ?V => "adenine, cytosine, or guanine (not uracil)",
+  })
+
   @amino_names %{
     ?a => "alanine",
     ?r => "arginine",
@@ -113,23 +124,53 @@ defmodule Bio.Sequence.MonomerName do
   }
 
   @doc """
-  Mapping nucleotides to their chemical names
+  Mapping DNA nucleotides to their chemical names.
+
+  Chemical names include ambiguous encodings.
 
   ## Example
 
-      iex>MonomerName.nucleic_acid("a")
+      iex>MonomerName.dna("a")
       "adenine"
+
+      iex>MonomerName.dna("B")
+      "guanine, cytosine, or thymine (not adenine)"
 
   Useful for identifying things at positions within existing sequences:
 
-      iex>Bio.Sequence.AminoAcid.new("MAGTATGCCXNPK")
+      iex>Bio.Sequence.DnaStrand.new("AATGCCGATGATGACTG")
       ...>|> Enum.at(9)
-      ...>|> MonomerName.amino_acid()
-      "any amino acid"
+      ...>|> MonomerName.dna()
+      "guanine"
   """
-  @spec nucleic_acid(monomer()) :: name()
-  def nucleic_acid(value) do
-    get(value, @nucleic_acid_names)
+  @spec dna(monomer()) :: name()
+  def dna(value) do
+    get(value, @dna_names)
+  end
+
+  @doc """
+  Mapping RNA nucleotides to their chemical names.
+
+  Chemical names include ambiguous encodings.
+
+  ## Example
+
+      iex>MonomerName.rna("a")
+      "adenine"
+
+      iex>MonomerName.rna("K")
+      "guanine or uracil"
+
+  Useful for identifying things at positions within existing sequences:
+
+      iex>Bio.Sequence.RnaStrand.new("UACGUUAACYCGAGUCAGC")
+      ...>|> Enum.at(9)
+      ...>|> MonomerName.rna()
+      "cytosine or uracil"
+  """
+  @spec rna(monomer()) :: name()
+  def rna(value) do
+    get(value, @rna_names)
   end
 
   @doc """
@@ -137,15 +178,18 @@ defmodule Bio.Sequence.MonomerName do
 
   ## Example
 
-      iex>MonomerName.nucleic_acid("a")
-      "adenine"
-
-  Useful for identifying things at positions within existing sequences:
-
       iex>Bio.Sequence.AminoAcid.new("MAGTATGCCXNPK")
       ...>|> Enum.at(9)
       ...>|> MonomerName.amino_acid()
       "any amino acid"
+
+  Or:
+
+      iex>Bio.Sequence.AminoAcid.new("MAGTATGCCXNPK")
+      ...>|> Enum.at(11)
+      ...>|> MonomerName.amino_acid()
+      "proline"
+
   """
   @spec amino_acid(monomer()) :: name()
   def amino_acid(value) do

@@ -9,7 +9,7 @@ defmodule SequenceMonomerNameTest do
   describe "using with DNA" do
     test "works with Enum.map/n" do
       assert DnaStrand.new("ATGCatgc")
-             |> Enum.map(&MonomerName.nucleic_acid/1) == [
+             |> Enum.map(&MonomerName.dna/1) == [
                "adenine",
                "thymine",
                "guanine",
@@ -24,7 +24,7 @@ defmodule SequenceMonomerNameTest do
     test "works with Enum.chunk_every(1)" do
       assert DnaStrand.new("ATGCatgc")
              |> Enum.chunk_every(1)
-             |> Enum.map(&MonomerName.nucleic_acid/1) == [
+             |> Enum.map(&MonomerName.dna/1) == [
                "adenine",
                "thymine",
                "guanine",
@@ -40,7 +40,7 @@ defmodule SequenceMonomerNameTest do
       assert_raise(ArgumentError, fn ->
         DnaStrand.new("ATGCatgc")
         |> Enum.chunk_every(2)
-        |> Enum.map(&MonomerName.nucleic_acid/1)
+        |> Enum.map(&MonomerName.dna/1)
       end)
     end
   end
@@ -48,7 +48,7 @@ defmodule SequenceMonomerNameTest do
   describe "using with RNA" do
     test "works with Enum.map/n" do
       assert RnaStrand.new("AUGCaugc")
-             |> Enum.map(&MonomerName.nucleic_acid/1) == [
+             |> Enum.map(&MonomerName.rna/1) == [
                "adenine",
                "uracil",
                "guanine",
@@ -63,7 +63,7 @@ defmodule SequenceMonomerNameTest do
     test "works with Enum.chunk_every(1)" do
       assert RnaStrand.new("AUGCaUgc")
              |> Enum.chunk_every(1)
-             |> Enum.map(&MonomerName.nucleic_acid/1) == [
+             |> Enum.map(&MonomerName.rna/1) == [
                "adenine",
                "uracil",
                "guanine",
@@ -79,7 +79,7 @@ defmodule SequenceMonomerNameTest do
       assert_raise(ArgumentError, fn ->
         RnaStrand.new("AUGCaUgc")
         |> Enum.chunk_every(2)
-        |> Enum.map(&MonomerName.nucleic_acid/1)
+        |> Enum.map(&MonomerName.rna/1)
       end)
     end
   end
