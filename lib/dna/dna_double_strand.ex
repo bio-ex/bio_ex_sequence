@@ -2,6 +2,8 @@
 # TODO: Do a better job explaining the purpose of the offset
 # TODO: expand what validity means and add tests
 # TODO: Look at implementing a String.Chars approach for nicer looking output
+# TODO: Add a bit about using `inspect` once `String.Chars` is added, as that
+# will be a part of the debugging process.
 defmodule Bio.Sequence.DnaDoubleStrand do
   @behaviour Bio.Sequential
 

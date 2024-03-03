@@ -1,6 +1,5 @@
-# TODO: DNA/RNA conversions need to handle the ambiguous codons.
-# OR We can define "AmbiguousDna" in the guide and use that as an example of an
-# expansion outside the scope of the module...
+# TODO: Define "AmbiguousDna" in the guide and use that as an example of an
+# expansion outside the scope of the module.
 defmodule Bio.Sequence.Dna do
   @moduledoc """
   A module for working with DNA.
