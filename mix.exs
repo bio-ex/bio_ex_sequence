@@ -104,8 +104,8 @@ defmodule Bio.Sequence.MixProject do
 
   def extras() do
     [
-      "./guides/Implementing Polymeric Types.md",
-      "./guides/Implementing Polymer Conversions.md"
+      "./guides/Implementing Polymeric Types.livemd",
+      "./guides/Implementing Polymer Conversions.livemd"
     ]
   end
 
