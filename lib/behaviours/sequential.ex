@@ -1,4 +1,3 @@
-# TODO: link this to the conversions guide
 # TODO: think through how `dump` might work with `Code.loaded?` for
 # inter-package dependencies.
 defmodule Bio.Sequential do
@@ -23,7 +22,8 @@ defmodule Bio.Sequential do
   Together with the `Bio.Polymeric` protocol, the `Bio.Convertible` behaviour
   and `Bio.Polymer` module  create a robust conversion mechanic that can be
   hooked into by user defined types. For further reading on that, look at the
-  `Bio.Polymer` module docs.
+  [Implementing Polymer Conversions](Implementing Polymer Conversions.livemd)
+  guide.
 
   The final callback, `fasta_line/1`, exists because this is a bioinformatics
   library. Sequences are pretty much always going to be written out to a fasta

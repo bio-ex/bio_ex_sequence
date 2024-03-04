@@ -1,4 +1,3 @@
-# TODO: point the conversion discussion to the new guide
 defmodule Bio.Sequence.AminoAcid do
   @moduledoc """
   Amino acids are modeled as simple sequences using `Bio.BaseSequence`.
@@ -16,12 +15,12 @@ defmodule Bio.Sequence.AminoAcid do
       ...>|>Enum.slice(2, 2)
       ~c"ab"
 
-  If you are interested in defining conversions of amino acids then look into
-  the `Bio.Polymer` module for how to deal with creating a Conversion module.
-
   The simple `Bio.Sequence.AminoAcid` does define the `Bio.Polymeric` protocol,
   which will allow you to define conversions from this to any type you may
   desire.
+
+  To learn how to implement a proper converter, read the [Implementing Polymer
+  Conversions](Implementing Polymer Conversions.livemd) guide.
   """
   use Bio.BaseSequence
 
@@ -37,6 +36,7 @@ end
 defimpl Bio.Polymeric, for: Bio.Sequence.AminoAcid do
   alias Bio.Sequence.AminoAcid
 
+  @spec kmers(%AminoAcid{}, integer()) :: {:error, :seq_len_mismatch} | {:ok, [charlist()], map()}
   def kmers(%AminoAcid{} = amino, k) do
     case rem(amino.length, k) do
       0 ->
@@ -52,11 +52,15 @@ defimpl Bio.Polymeric, for: Bio.Sequence.AminoAcid do
     end
   end
 
+  @spec valid?(%AminoAcid{}, charlist()) :: boolean()
   def valid?(%AminoAcid{sequence: seq}, alphabet) do
     Bio.Sequence.Alphabets.differences(seq, alphabet)
     |> Enum.empty?()
   end
 
+  @spec validate(%AminoAcid{}, charlist()) ::
+          {:error, [{:mismatch_alpha, binary(), integer(), list()}, ...]}
+          | {:ok, %AminoAcid{}}
   def validate(%AminoAcid{label: label, length: length} = aa, alphabet) do
     Bio.Sequence.Alphabets.validate_against(aa.sequence, alphabet)
     |> case do

@@ -1,5 +1,9 @@
 defmodule Bio.Sequence.RnaDoubleStrand do
+  @moduledoc """
+  A representative struct for Double Stranded DNA polymers.
+  """
   @behaviour Bio.Sequential
+
   alias Bio.Sequence.{Rna, RnaStrand, DnaDoubleStrand}
   alias Bio.Sequence.Alphabets.Rna, as: Alpha
 
@@ -10,6 +14,21 @@ defmodule Bio.Sequence.RnaDoubleStrand do
             valid?: false,
             alphabet: nil
 
+  @doc """
+  Generate a new `%Bio.Sequence.RnaDoubleStrand{}` struct.
+
+  ## Options
+  `label` - This is a label applied to the top and bottom.
+
+  `alphabet` - This is the alphabet to use for the top and bottom strands,
+  defaults to the `Bio.Sequence.Alphabets.Rna.iupac/0`. This allows the most
+  general use of the `new` function in unknown scenarios.
+
+  `complement_offset` - Offset for the strands. Positive values are considered
+  offset to top, negative as offset to bottom. E.g. `5` would give 5 nt offset
+  on top, leading to a bottom strand overhang on the 5' side and a top strand
+  overhang on the 3' side.
+  """
   @impl Bio.Sequential
   def new(top_strand, opts \\ [])
 

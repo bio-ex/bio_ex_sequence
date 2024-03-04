@@ -10,8 +10,9 @@ defmodule Bio.BaseSequence do
   clarification, see the examples in `Bio.Sequence`.
 
   This module will also cause `new/2` to be defined. This function takes a
-  sequence as well as the keywords `:label` and `:length`. For more examples of
-  using `new/2` see `Bio.Sequence.AminoAcid`, `Bio.Sequence.DnaStrand`, or
+  sequence as either a `binary()` or a `charlist()`, as well as the keywords
+  `:label` and `:length`. For more examples of using `new/2` see
+  `Bio.Sequence.AminoAcid`, `Bio.Sequence.DnaStrand`, or
   `Bio.Sequence.RnaStrand`.
   """
   defmacro __using__(_) do

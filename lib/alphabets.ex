@@ -301,19 +301,19 @@ defmodule Bio.Sequence.Alphabets do
     @doc """
     #{@common}
     """
-    @spec common() :: String.t()
+    @spec common() :: charlist()
     def common, do: @common
 
     @doc """
     #{@with_n}
     """
-    @spec with_n() :: String.t()
+    @spec with_n() :: charlist()
     def with_n, do: @with_n
 
     @doc """
     #{@iupac}
     """
-    @spec iupac() :: String.t()
+    @spec iupac() :: charlist()
     def iupac, do: @iupac
 
     @doc """
@@ -321,7 +321,7 @@ defmodule Bio.Sequence.Alphabets do
 
     Alphabet must be one of the valid `Bio.Sequence.Alphabets.Dna` options.
     """
-    @spec complement(String.t(), String.t()) ::
+    @spec complement(String.t(), charlist()) ::
             {:error, {:unknown_code, String.t(), String.t()}} | {:ok, String.t()}
     def complement(base, alpha)
 
@@ -398,19 +398,19 @@ defmodule Bio.Sequence.Alphabets do
     @doc """
     #{@common}
     """
-    @spec common() :: String.t()
+    @spec common() :: charlist()
     def common, do: @common
 
     @doc """
     #{@with_n}
     """
-    @spec with_n() :: String.t()
+    @spec with_n() :: charlist()
     def with_n, do: @with_n
 
     @doc """
     #{@iupac}
     """
-    @spec iupac() :: String.t()
+    @spec iupac() :: charlist()
     def iupac, do: @iupac
 
     @doc """
@@ -418,7 +418,7 @@ defmodule Bio.Sequence.Alphabets do
 
     Alphabet must be one of the valid `Bio.Sequence.Alphabets.Rna` options.
     """
-    @spec complement(String.t(), String.t()) ::
+    @spec complement(String.t(), charlist()) ::
             {:error, {:unknown_code, String.t(), String.t()}} | {:ok, String.t()}
     def complement(base, alpha)
 
@@ -452,13 +452,13 @@ defmodule Bio.Sequence.Alphabets do
     @doc """
     #{@common}
     """
-    @spec common() :: String.t()
+    @spec common() :: charlist()
     def common, do: @common
 
     @doc """
     #{@iupac}
     """
-    @spec iupac() :: String.t()
+    @spec iupac() :: charlist()
     def iupac, do: @iupac
   end
 end

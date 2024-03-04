@@ -1,12 +1,16 @@
 # TODO: Move the conversions information into a guide in the docs
 defmodule Bio.Polymer do
   @moduledoc """
-  Deals with conversions between polymers.
+  A module for dealing polymers.
 
-  The sequences that this will work with must define an implementation for the
-  `Bio.Polymeric` protocol. This is then used with the definition of
-  the `to/1` callbacks for the `Bio.Convertible` behaviour. These will
-  be given the "kmer" enumeration that they define with that function.
+  This module is largely for decoupling the way that a sequence is defined vs
+  how the conversion is defined. It also serves as a way to generally interact
+  with polymers.
+
+  The sequences that will work with this module must define an implementation
+  for the `Bio.Polymeric` protocol. This is then used with the definition of the
+  `to/1` callbacks for the `Bio.Convertible` behaviour. These will be given the
+  "kmer" enumeration that they define with that function.
 
   This module wraps the logic of accessing a given polymer's defined
   conversions. The primary idea is that I wanted to expose the ability to

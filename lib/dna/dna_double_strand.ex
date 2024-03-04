@@ -4,15 +4,17 @@
 # TODO: Look at implementing a String.Chars approach for nicer looking output
 # TODO: Add a bit about using `inspect` once `String.Chars` is added, as that
 # will be a part of the debugging process.
+# TODO: you actually need to sort out the offsetting and complementing...
 defmodule Bio.Sequence.DnaDoubleStrand do
+  @moduledoc """
+  A representative struct for Double Stranded DNA polymers.
+  """
+
   @behaviour Bio.Sequential
 
   alias Bio.Sequence.{Dna, DnaStrand, RnaDoubleStrand, RnaStrand}
   alias Bio.Sequence.Alphabets.Dna, as: DnAlpha
 
-  @moduledoc """
-  A representative struct for Double Stranded DNA polymers.
-  """
 
   defstruct top_strand: DnaStrand.new(~c"", length: 0),
             bottom_strand: DnaStrand.new(~c"", length: 0),
@@ -26,13 +28,21 @@ defmodule Bio.Sequence.DnaDoubleStrand do
 
   ## Options
   `label` - This is a label applied to the top and bottom.
+
   `alphabet` - This is the alphabet to use for the top and bottom strands,
   defaults to the `Bio.Sequence.Alphabets.Dna.iupac/0`. This allows the most
   general use of the `new` function in unknown scenarios.
+
   `complement_offset` - Offset for the strands. Positive values are considered
   offset to top, negative as offset to bottom. E.g. `5` would give 5 nt offset
-  on top, leading to a bottom strand overhand on the 5' side and a top strand
+  on top, leading to a bottom strand overhang on the 5' side and a top strand
   overhang on the 3' side.
+
+  To visualize the offset, it helps to write it out. Assuming we do the following:application
+
+  ``` elixir
+  Bio.Sequence.DnaDoubleStrand.new("atgc", complement_offset: 2)
+  ```
   """
   @impl Bio.Sequential
   def new(top_strand, opts \\ [])
@@ -91,6 +101,8 @@ defmodule Bio.Sequence.DnaDoubleStrand do
   defmodule Conversions do
     @moduledoc false
     use Bio.Convertible do
+      @spec to(any()) ::
+              {:error, :undef_conversion} | {:ok, ({:ok, any(), any()}, any() -> any()), 1}
       def to(RnaStrand), do: {:ok, &to_rna_strand/2, 1}
       def to(RnaDoubleStrand), do: {:ok, &to_rna/2, 1}
     end
@@ -127,6 +139,7 @@ defmodule Bio.Sequence.DnaDoubleStrand do
   end
 
   @impl Bio.Sequential
+  @spec converter() :: Bio.Sequence.DnaDoubleStrand.Conversions
   def converter(), do: __MODULE__.Conversions
 
   @impl Bio.Sequential
@@ -136,6 +149,9 @@ end
 defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
   alias Bio.Sequence.DnaDoubleStrand
 
+  @spec kmers(%DnaDoubleStrand{}, integer()) ::
+          {:error, :seq_len_mismatch}
+          | {:ok, [{any(), any()}], %{complement_offset: integer(), label: any()}}
   def kmers(
         %DnaDoubleStrand{top_strand: top, bottom_strand: bottom, complement_offset: offset} =
           dna_double,
@@ -179,6 +195,7 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
   2. All the element pairs are complements for that alphabet's definition
   3. Both strands have the same alphabet
   """
+  @spec valid?(%DnaDoubleStrand{}, charlist()) :: boolean()
   def valid?(
         %DnaDoubleStrand{top_strand: top, bottom_strand: bottom} = data,
         alphabet
@@ -206,6 +223,12 @@ defimpl Bio.Polymeric, for: Bio.Sequence.DnaDoubleStrand do
     |> Enum.all?()
   end
 
+  @spec validate(%DnaDoubleStrand{}, any()) ::
+          {:error,
+           :mismatch_alpha
+           | {:bottom, [{any(), any(), any()}] | {atom(), list(), integer()}}
+           | {:top, [{any(), any(), any()}] | {atom(), list(), integer()}}}
+          | {:ok, %DnaDoubleStrand{:valid? => true}}
   def validate(%DnaDoubleStrand{} = data, alphabet) do
     {top_alpha, bottom_alpha} =
       case alphabet do

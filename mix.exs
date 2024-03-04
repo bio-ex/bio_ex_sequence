@@ -94,8 +94,7 @@ defmodule Bio.Sequence.MixProject do
           Bio.Sequential,
           Bio.Convertible
         ],
-        Utilities: [
-          Bio.Enum,
+        Protocols: [
           Bio.Polymeric
         ]
       ]
