@@ -7,22 +7,20 @@ defmodule Bio.Sequence.AminoAcid do
       ...>"mabag" in aa
       true
 
-      iex>alias Bio.Enum, as: Bnum
-      ...>AminoAcid.new("ymabagta")
-      ...>|>Bnum.map(&(&1))
-      %AminoAcid{sequence: "ymabagta", length: 8}
+      iex>AminoAcid.new("ymabagta")
+      ...>|>Enum.map(&(&1))
+      ~c"ymabagta"
 
-      iex>alias Bio.Enum, as: Bnum
-      ...>AminoAcid.new("ymabagta")
-      ...>|>Bnum.slice(2, 2)
-      %AminoAcid{sequence: "ab", length: 2}
-
-  If you are interested in defining conversions of amino acids then look into
-  the `Bio.Polymer` module for how to deal with creating a Conversion module.
+      iex>AminoAcid.new("ymabagta")
+      ...>|>Enum.slice(2, 2)
+      ~c"ab"
 
   The simple `Bio.Sequence.AminoAcid` does define the `Bio.Polymeric` protocol,
   which will allow you to define conversions from this to any type you may
   desire.
+
+  To learn how to implement a proper converter, read the [Implementing Polymer
+  Conversions](Implementing Polymer Conversions.livemd) guide.
   """
   use Bio.BaseSequence
 
@@ -38,13 +36,13 @@ end
 defimpl Bio.Polymeric, for: Bio.Sequence.AminoAcid do
   alias Bio.Sequence.AminoAcid
 
+  @spec kmers(%AminoAcid{}, integer()) :: {:error, :seq_len_mismatch} | {:ok, [charlist()], map()}
   def kmers(%AminoAcid{} = amino, k) do
     case rem(amino.length, k) do
       0 ->
         {:ok,
          amino
-         |> Enum.chunk_every(k)
-         |> Enum.map(&Enum.join(&1, "")),
+         |> Enum.chunk_every(k),
          amino
          |> Map.from_struct()
          |> Map.drop([:sequence])}
@@ -54,39 +52,24 @@ defimpl Bio.Polymeric, for: Bio.Sequence.AminoAcid do
     end
   end
 
+  @spec valid?(%AminoAcid{}, charlist()) :: boolean()
   def valid?(%AminoAcid{sequence: seq}, alphabet) do
-    with {:ok, regex} <- Regex.compile("[^#{alphabet}]") do
-      not Regex.match?(regex, seq)
-    else
-      bad -> bad
-    end
+    Bio.Sequence.Alphabets.differences(seq, alphabet)
+    |> Enum.empty?()
   end
 
-  def validate(%AminoAcid{label: label, length: length} = sequence, alphabet) do
-    # TODO: this is generalizable
-    parsed =
-      sequence
-      |> Enum.with_index()
-      |> Enum.reduce(%{}, fn {char, index}, acc ->
-        case String.contains?(alphabet, char) do
-          true ->
-            (Map.get(acc, :result, "") <> char)
-            |> then(&Map.put(acc, :result, &1))
+  @spec validate(%AminoAcid{}, charlist()) ::
+          {:error, [{:mismatch_alpha, binary(), integer(), list()}, ...]}
+          | {:ok, %AminoAcid{}}
+  def validate(%AminoAcid{label: label, length: length} = aa, alphabet) do
+    Bio.Sequence.Alphabets.validate_against(aa.sequence, alphabet)
+    |> case do
+      {:error, _} = bad ->
+        bad
 
-          false ->
-            Map.get(acc, :errors, [])
-            |> List.insert_at(-1, {:mismatch_alpha, char, index})
-            |> then(&Map.put(acc, :errors, &1))
-        end
-      end)
-
-    case parsed do
-      %{errors: [_ | _]} ->
-        {:error, parsed.errors}
-
-      %{result: string} ->
+      {:ok, sequence} ->
         {:ok,
-         AminoAcid.new(string, label: label, length: length, alphabet: alphabet)
+         AminoAcid.new(sequence, label: label, length: length, alphabet: alphabet)
          |> Map.put(:valid?, true)}
     end
   end

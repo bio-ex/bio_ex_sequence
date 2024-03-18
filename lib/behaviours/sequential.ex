@@ -1,3 +1,5 @@
+# TODO: think through how `dump` might work with `Code.loaded?` for
+# inter-package dependencies.
 defmodule Bio.Sequential do
   @moduledoc """
   How a "sequence" ought to comport itself.
@@ -20,7 +22,8 @@ defmodule Bio.Sequential do
   Together with the `Bio.Polymeric` protocol, the `Bio.Convertible` behaviour
   and `Bio.Polymer` module  create a robust conversion mechanic that can be
   hooked into by user defined types. For further reading on that, look at the
-  `Bio.Polymer` module docs.
+  [Implementing Polymer Conversions](Implementing Polymer Conversions.livemd)
+  guide.
 
   The final callback, `fasta_line/1`, exists because this is a bioinformatics
   library. Sequences are pretty much always going to be written out to a fasta
@@ -59,6 +62,11 @@ defmodule Bio.Sequential do
   Given a struct, returns the String.t() line for a FASTA file
 
   This will be called from within `Bio.IO.Fasta.write/3`
+
+  > #### Note {: .neutral}
+  > This may be removed in the future to make way for a `dump` function which
+  > can be given various formats. Those formats would then require various
+  > implementations from external packages to help decouple things.
   """
   @callback fasta_line(given :: struct()) :: line :: String.t()
 end

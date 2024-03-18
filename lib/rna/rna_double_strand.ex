@@ -1,7 +1,10 @@
 defmodule Bio.Sequence.RnaDoubleStrand do
+  @moduledoc """
+  A representative struct for Double Stranded DNA polymers.
+  """
   @behaviour Bio.Sequential
+
   alias Bio.Sequence.{Rna, RnaStrand, DnaDoubleStrand}
-  alias Bio.Enum, as: Bnum
   alias Bio.Sequence.Alphabets.Rna, as: Alpha
 
   defstruct top_strand: RnaStrand.new("", length: 0),
@@ -11,8 +14,31 @@ defmodule Bio.Sequence.RnaDoubleStrand do
             valid?: false,
             alphabet: nil
 
+  @doc """
+  Generate a new `%Bio.Sequence.RnaDoubleStrand{}` struct.
+
+  ## Options
+  `label` - This is a label applied to the top and bottom.
+
+  `alphabet` - This is the alphabet to use for the top and bottom strands,
+  defaults to the `Bio.Sequence.Alphabets.Rna.iupac/0`. This allows the most
+  general use of the `new` function in unknown scenarios.
+
+  `complement_offset` - Offset for the strands. Positive values are considered
+  offset to top, negative as offset to bottom. E.g. `5` would give 5 nt offset
+  on top, leading to a bottom strand overhang on the 5' side and a top strand
+  overhang on the 3' side.
+  """
   @impl Bio.Sequential
-  def new(top_strand, opts \\ []) when is_binary(top_strand) do
+  def new(top_strand, opts \\ [])
+
+  def new(top_strand, opts) when is_binary(top_strand) do
+    top_strand
+    |> String.to_charlist()
+    |> new(opts)
+  end
+
+  def new(top_strand, opts) when is_list(top_strand) do
     label = Keyword.get(opts, :label, "")
     offset = Keyword.get(opts, :complement_offset, 0)
     alphabet = Keyword.get(opts, :alphabet, Alpha.iupac())
@@ -22,7 +48,7 @@ defmodule Bio.Sequence.RnaDoubleStrand do
     cond do
       given_bottom == nil ->
         top
-        |> Bnum.slice(offset, top.length)
+        |> Enum.slice(offset, top.length)
         |> Rna.complement(alphabet: alphabet)
         |> case do
           {:error, mismatches} ->
@@ -33,7 +59,7 @@ defmodule Bio.Sequence.RnaDoubleStrand do
               __MODULE__,
               %{
                 top_strand: top,
-                bottom_strand: generated_bottom,
+                bottom_strand: RnaStrand.new(generated_bottom),
                 complement_offset: offset,
                 label: label,
                 alphabet: alphabet
@@ -67,12 +93,12 @@ defmodule Bio.Sequence.RnaDoubleStrand do
 
     def to_dna_double({:ok, knumeration, data}, _module) do
       knumeration
-      |> Enum.reduce({"", ""}, fn {top, bottom}, {t, b} ->
-        {t <> dna(top), b <> dna(bottom)}
+      |> Enum.reduce({[], []}, fn {[top], [bottom]}, {t, b} ->
+        {[dna(top) | t], [dna(bottom) | b]}
       end)
       |> then(fn {top, bottom} ->
-        DnaDoubleStrand.new(top,
-          bottom_strand: bottom,
+        DnaDoubleStrand.new(Enum.reverse(top),
+          bottom_strand: Enum.reverse(bottom),
           label: Map.get(data, :label)
         )
       end)
@@ -80,14 +106,14 @@ defmodule Bio.Sequence.RnaDoubleStrand do
 
     defp dna(base) do
       case base do
-        "A" -> "A"
-        "U" -> "T"
-        "G" -> "G"
-        "C" -> "C"
-        "a" -> "a"
-        "u" -> "t"
-        "g" -> "g"
-        "c" -> "c"
+        ?A -> ?A
+        ?U -> ?T
+        ?G -> ?G
+        ?C -> ?C
+        ?a -> ?a
+        ?u -> ?t
+        ?g -> ?g
+        ?c -> ?c
       end
     end
   end
@@ -109,7 +135,7 @@ defimpl Bio.Polymeric, for: Bio.Sequence.RnaDoubleStrand do
         k
       ) do
     total_span = top.length + abs(offset)
-    spacing = 1..offset |> Enum.reduce([], fn _, acc -> [" " | acc] end)
+    spacing = 1..offset |> Enum.reduce([], fn _, acc -> [nil | acc] end)
 
     {top, bottom} =
       cond do
@@ -125,15 +151,11 @@ defimpl Bio.Polymeric, for: Bio.Sequence.RnaDoubleStrand do
 
     case rem(total_span, k) do
       0 ->
-        {:ok,
-         Enum.zip(
-           top
-           |> Enum.chunk_every(k)
-           |> Enum.map(&Enum.join(&1, "")),
-           bottom
-           |> Enum.chunk_every(k)
-           |> Enum.map(&Enum.join(&1, ""))
-         ), %{label: label, complement_offset: offset}}
+        {
+          :ok,
+          Enum.zip(Enum.chunk_every(top, k), Enum.chunk_every(bottom, k)),
+          %{label: label, complement_offset: offset}
+        }
 
       _ ->
         {:error, :seq_len_mismatch}
@@ -159,9 +181,9 @@ defimpl Bio.Polymeric, for: Bio.Sequence.RnaDoubleStrand do
     {:ok, kmers, _data} = Bio.Polymeric.kmers(double_strand, 1)
 
     kmers
-    |> Enum.map(fn {top, bottom} ->
+    |> Enum.map(fn {[top], [bottom]} ->
       case top do
-        "" ->
+        nil ->
           true
 
         _ ->

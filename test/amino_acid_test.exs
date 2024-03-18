@@ -15,23 +15,23 @@ defmodule Sequence.AminoAcidTest do
       assert kmers(seq, 1) ==
                {:ok,
                 [
-                  "m",
-                  "a",
-                  "g",
-                  "i",
-                  "c",
-                  "t",
-                  "h",
-                  "e",
-                  "g",
-                  "a",
-                  "t",
-                  "h",
-                  "e",
-                  "r",
-                  "i",
-                  "n",
-                  "g"
+                  ~c"m",
+                  ~c"a",
+                  ~c"g",
+                  ~c"i",
+                  ~c"c",
+                  ~c"t",
+                  ~c"h",
+                  ~c"e",
+                  ~c"g",
+                  ~c"a",
+                  ~c"t",
+                  ~c"h",
+                  ~c"e",
+                  ~c"r",
+                  ~c"i",
+                  ~c"n",
+                  ~c"g"
                 ], %{label: "a pretty cool game", length: 17, alphabet: nil, valid?: false}}
     end
 
@@ -44,7 +44,7 @@ defmodule Sequence.AminoAcidTest do
       seq = Subject.new("magicthegatherin", label: "a pretty cool game")
 
       assert kmers(seq, 2) ==
-               {:ok, ["ma", "gi", "ct", "he", "ga", "th", "er", "in"],
+               {:ok, [~c"ma", ~c"gi", ~c"ct", ~c"he", ~c"ga", ~c"th", ~c"er", ~c"in"],
                 %{label: "a pretty cool game", length: 16, alphabet: nil, valid?: false}}
     end
 
@@ -52,7 +52,7 @@ defmodule Sequence.AminoAcidTest do
       seq = Subject.new("magicthegatherings", label: "a few of a pretty cool game")
 
       assert kmers(seq, 3) ==
-               {:ok, ["mag", "ict", "heg", "ath", "eri", "ngs"],
+               {:ok, [~c"mag", ~c"ict", ~c"heg", ~c"ath", ~c"eri", ~c"ngs"],
                 %{label: "a few of a pretty cool game", length: 18, alphabet: nil, valid?: false}}
     end
   end
@@ -67,7 +67,7 @@ defmodule Sequence.AminoAcidTest do
         |> Polymer.validate(Alpha.iupac())
 
       assert seq == %Subject{
-               sequence: "magicthegatheringx",
+               sequence: ~c"magicthegatheringx",
                alphabet: Alpha.iupac(),
                length: 18,
                valid?: true
@@ -80,7 +80,7 @@ defmodule Sequence.AminoAcidTest do
         |> Polymer.validate()
 
       assert seq == %Subject{
-               sequence: "magicthegathering",
+               sequence: ~c"magicthegathering",
                alphabet: Alpha.common(),
                length: 17,
                valid?: true

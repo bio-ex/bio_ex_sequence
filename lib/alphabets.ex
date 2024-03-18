@@ -1,4 +1,3 @@
-# TODO: add some docs about complementation
 defmodule Bio.Sequence.Alphabets do
   @moduledoc """
   Alphabets relevant to the sequences, coding schemes are expressed in
@@ -105,64 +104,216 @@ defmodule Bio.Sequence.Alphabets do
   X ::=  ANY
   ```
   """
+  @typedoc """
+  An `alphabet` is any character list which defines a desired set of character
+  values. These should be ASCII characters, and are allowed to range across any
+  value.
+  """
+  @type alphabet :: charlist()
+
+  @typedoc """
+  A `sequence` is any charlist comprised of the values, or expected to be
+  comprised of the values of an `alphabet`.
+  """
+  @type sequence :: charlist()
+  @typedoc """
+  An `index` in this context is the index of a character's position within a
+  `sequence`.
+  """
+  @type index :: integer()
+  @typedoc """
+  Because `sequence` and `alphabet` are defined as charlists, individual
+  characters are [code
+  points](https://hexdocs.pm/elixir/binaries-strings-and-charlists.html#unicode-and-code-points).
+  Where it makes sense, these are cast to strings for the purpose of debugging,
+  but you may occasionally see them as integers in output. When writing code,
+  you should use the `?` operator to allow matching on code point literals, per
+  the linked documentation.
+  """
+  @type character :: integer()
+  @typedoc """
+  A `character_repr` is a String representation of a character that is returned
+  in case of error modes where inspecting the output means that you would desire
+  to see the encoded character as opposed to the code point.
+  """
+  @type character_repr :: String.t()
+  @type mismatch :: {:mismatch_alpha, character_repr(), index(), alphabet()}
+  @type mismatches :: [mismatch()]
+
+  @doc """
+  Run validation of a charlist against a charlist alphabet.
+
+  This is a low-level function which may be used when implementing e.g.
+  conversions/validations in your polymers. For examples, see the implementation
+  of `Bio.Polymeric` within the `Bio.Sequence.DnaStrand` module.
+  """
+  @spec validate_against(sequence(), alphabet()) :: {:ok, sequence()} | {:error, mismatches()}
+  def validate_against(sequence_chars, alphabet) do
+    sequence_chars
+    |> Enum.with_index()
+    |> Enum.reduce(%{errors: []}, fn {char, index}, acc ->
+      case char in alphabet do
+        true -> acc
+        false -> put_mismatch_error(acc, char, index, alphabet)
+      end
+    end)
+    |> case do
+      %{errors: []} -> {:ok, sequence_chars}
+      %{errors: [_ | _] = errors} -> {:error, errors}
+    end
+  end
+
+  @doc """
+  Given two character lists `a` and `b` determine the set difference between `a`
+  and `b`.
+
+  For example, if you want to determine if a sequence conforms to an alphabet,
+  you can pass them in as:
+
+      iex>alias Bio.Sequence.Alphabets
+      ...>Alphabets.differences(~c"MAAKTGZKNMA", Alphabets.AminoAcid.common())
+      MapSet.new([?Z])
+
+  This is used for determining if a sequence is valid according to the described
+  `alphabet`. The runtime is necessarily `O(n*m)` for sequence length `n` and
+  alphabet length `m`.
+  """
+  @spec differences(charlist(), charlist()) :: MapSet.t()
+  def differences(a, b) do
+    MapSet.difference(MapSet.new(a), MapSet.new(b))
+  end
+
+  @doc """
+  Return the complement of a charlist according to it's `alphabet` and `module`.
+
+  This will build the complement of a sequence by inferring the alphabet to pull
+  in from the `alpha_mod` module. An `alpha_mod` need only define a `common/0`,
+  used in case an alphabet is not provided, as well as a `complement/2`
+  function.
+
+  The `complement/2` function takes a character or charlist and an alphabet,
+  returning the complement.
+
+  Options may include the alphabet to be used, which should be a charlist.
+  """
+  @spec complement(sequence(), module(), Keyword.t()) ::
+          {:ok, sequence()} | {:error, mismatches()}
+  def complement(sequence, alpha_mod, opts \\ []) when is_list(sequence) do
+    alphabet = get_alpha(opts, alpha_mod)
+
+    comps =
+      sequence
+      |> Enum.with_index()
+      |> Enum.map(fn {base, index} ->
+        {apply(alpha_mod, :complement, [base, alphabet]), index}
+      end)
+
+    cond do
+      Enum.any?(comps, fn {{status, _}, _} -> status == :error end) ->
+        {:error,
+         Enum.reduce(comps, [], fn {{status, result}, index}, acc ->
+           case status do
+             :ok ->
+               acc
+
+             :error ->
+               {_, char, alpha} = result
+               put_mismatch_error(acc, char, index, alpha)
+           end
+         end)}
+
+      true ->
+        {:ok,
+         Enum.reduce(comps, [], fn {{_, result}, _}, acc ->
+           [result | acc]
+         end)
+         |> Enum.reverse()}
+    end
+  end
+
+  defp put_mismatch_error(accumulator, char, index, alpha) when is_map(accumulator) do
+    Map.get(accumulator, :errors, [])
+    |> put_mismatch_error(char, index, alpha)
+    |> then(&Map.put(accumulator, :errors, &1))
+  end
+
+  defp put_mismatch_error(accumulator, char, index, alpha) when is_list(accumulator) do
+    List.insert_at(accumulator, -1, {:mismatch_alpha, to_string([char]), index, alpha})
+  end
+
+  @doc false
+  defp get_alpha(opts, alpha_mod) do
+    case Keyword.get(opts, :alphabet) do
+      nil ->
+        apply(alpha_mod, :common, [])
+
+      [_ | _] = given_list ->
+        given_list
+
+      otherwise ->
+        raise ArgumentError,
+              "alphabet for complement must be a charlist, received #{inspect(otherwise)}"
+    end
+  end
+
   defmodule Dna do
     @moduledoc """
     DNA Alphabets
     """
-    @common "ATGCatgc"
-    @with_n "ACGTNacgtn"
-    @iupac "ACGTRYSWKMBDHVNacgtryswkmbdhvn"
+    @common ~c"ATGCatgc"
+    @with_n ~c"ACGTNacgtn"
+    @iupac ~c"ACGTRYSWKMBDHVNacgtryswkmbdhvn"
 
     @common_complement %{
-      "a" => "t",
-      "A" => "T",
-      "t" => "a",
-      "T" => "A",
-      "g" => "c",
-      "G" => "C",
-      "c" => "g",
-      "C" => "G"
+      ?a => ?t,
+      ?A => ?T,
+      ?t => ?a,
+      ?T => ?A,
+      ?g => ?c,
+      ?G => ?C,
+      ?c => ?g,
+      ?C => ?G
     }
-    @with_n_complement Map.merge(@common_complement, %{"N" => "N", "n" => "n"})
+    @with_n_complement Map.merge(@common_complement, %{?N => ?N, ?n => ?n})
     @iupac_complement Map.merge(@with_n_complement, %{
-                        "R" => "Y",
-                        "Y" => "R",
-                        "W" => "W",
-                        "S" => "S",
-                        "K" => "M",
-                        "M" => "K",
-                        "D" => "H",
-                        "V" => "B",
-                        "H" => "D",
-                        "B" => "V",
-                        "r" => "y",
-                        "y" => "r",
-                        "w" => "w",
-                        "s" => "s",
-                        "k" => "m",
-                        "m" => "k",
-                        "d" => "h",
-                        "v" => "b",
-                        "h" => "d",
-                        "b" => "v"
+                        ?R => ?Y,
+                        ?Y => ?R,
+                        ?W => ?W,
+                        ?S => ?S,
+                        ?K => ?M,
+                        ?M => ?K,
+                        ?D => ?H,
+                        ?V => ?B,
+                        ?H => ?D,
+                        ?B => ?V,
+                        ?r => ?y,
+                        ?y => ?r,
+                        ?w => ?w,
+                        ?s => ?s,
+                        ?k => ?m,
+                        ?m => ?k,
+                        ?d => ?h,
+                        ?v => ?b,
+                        ?h => ?d,
+                        ?b => ?v
                       })
 
     @doc """
     #{@common}
     """
-    @spec common() :: String.t()
+    @spec common() :: charlist()
     def common, do: @common
 
     @doc """
     #{@with_n}
     """
-    @spec with_n() :: String.t()
+    @spec with_n() :: charlist()
     def with_n, do: @with_n
 
     @doc """
     #{@iupac}
     """
-    @spec iupac() :: String.t()
+    @spec iupac() :: charlist()
     def iupac, do: @iupac
 
     @doc """
@@ -170,9 +321,17 @@ defmodule Bio.Sequence.Alphabets do
 
     Alphabet must be one of the valid `Bio.Sequence.Alphabets.Dna` options.
     """
-    @spec complement(String.t(), String.t()) ::
+    @spec complement(String.t(), charlist()) ::
             {:error, {:unknown_code, String.t(), String.t()}} | {:ok, String.t()}
     def complement(base, alpha)
+
+    def complement(base, alpha) when is_list(base) do
+      case base do
+        [base | []] -> base
+        _ -> raise ArgumentError, "Cannot complement multiple bases at once: #{base}"
+      end
+      |> complement(alpha)
+    end
 
     def complement(base, @common) do
       gets(base, @common_complement, @common)
@@ -198,60 +357,60 @@ defmodule Bio.Sequence.Alphabets do
     @moduledoc """
     RNA Alphabets
     """
-    @common "ACGUacgu"
-    @with_n "ACGUNacgun"
-    @iupac "ACGURYSWKMBDHVNZacguryswkmbdhvnz"
+    @common ~c"ACGUacgu"
+    @with_n ~c"ACGUNacgun"
+    @iupac ~c"ACGURYSWKMBDHVNZacguryswkmbdhvnz"
 
     @common_complement %{
-      "a" => "u",
-      "A" => "U",
-      "u" => "a",
-      "U" => "A",
-      "g" => "c",
-      "G" => "C",
-      "c" => "g",
-      "C" => "G"
+      ?a => ?u,
+      ?A => ?U,
+      ?u => ?a,
+      ?U => ?A,
+      ?g => ?c,
+      ?G => ?C,
+      ?c => ?g,
+      ?C => ?G
     }
-    @with_n_complement Map.merge(@common_complement, %{"N" => "N", "n" => "n"})
+    @with_n_complement Map.merge(@common_complement, %{?N => ?N, ?n => ?n})
     @iupac_complement Map.merge(@with_n_complement, %{
-                        "R" => "Y",
-                        "Y" => "R",
-                        "W" => "W",
-                        "S" => "S",
-                        "K" => "M",
-                        "M" => "K",
-                        "D" => "H",
-                        "V" => "B",
-                        "H" => "D",
-                        "B" => "V",
-                        "r" => "y",
-                        "y" => "r",
-                        "w" => "w",
-                        "s" => "s",
-                        "k" => "m",
-                        "m" => "k",
-                        "d" => "h",
-                        "v" => "b",
-                        "h" => "d",
-                        "b" => "v"
+                        ?R => ?Y,
+                        ?Y => ?R,
+                        ?W => ?W,
+                        ?S => ?S,
+                        ?K => ?M,
+                        ?M => ?K,
+                        ?D => ?H,
+                        ?V => ?B,
+                        ?H => ?D,
+                        ?B => ?V,
+                        ?r => ?y,
+                        ?y => ?r,
+                        ?w => ?w,
+                        ?s => ?s,
+                        ?k => ?m,
+                        ?m => ?k,
+                        ?d => ?h,
+                        ?v => ?b,
+                        ?h => ?d,
+                        ?b => ?v
                       })
 
     @doc """
     #{@common}
     """
-    @spec common() :: String.t()
+    @spec common() :: charlist()
     def common, do: @common
 
     @doc """
     #{@with_n}
     """
-    @spec with_n() :: String.t()
+    @spec with_n() :: charlist()
     def with_n, do: @with_n
 
     @doc """
     #{@iupac}
     """
-    @spec iupac() :: String.t()
+    @spec iupac() :: charlist()
     def iupac, do: @iupac
 
     @doc """
@@ -259,7 +418,7 @@ defmodule Bio.Sequence.Alphabets do
 
     Alphabet must be one of the valid `Bio.Sequence.Alphabets.Rna` options.
     """
-    @spec complement(String.t(), String.t()) ::
+    @spec complement(String.t(), charlist()) ::
             {:error, {:unknown_code, String.t(), String.t()}} | {:ok, String.t()}
     def complement(base, alpha)
 
@@ -287,19 +446,19 @@ defmodule Bio.Sequence.Alphabets do
     @moduledoc """
     Amino Acid Alphabets
     """
-    @common "ARNDCEQGHILKMFPSTWYVarndceqghilkmfpstwyv"
-    @iupac "ABCDEFGHJIKLMNPQRSTVWXYZabcdefghJiklmnpqrstvwxyz"
+    @common ~c"ARNDCEQGHILKMFPSTWYVarndceqghilkmfpstwyv"
+    @iupac ~c"ABCDEFGHJIKLMNPQRSTVWXYZabcdefghJiklmnpqrstvwxyz"
 
     @doc """
     #{@common}
     """
-    @spec common() :: String.t()
+    @spec common() :: charlist()
     def common, do: @common
 
     @doc """
     #{@iupac}
     """
-    @spec iupac() :: String.t()
+    @spec iupac() :: charlist()
     def iupac, do: @iupac
   end
 end

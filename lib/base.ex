@@ -5,24 +5,14 @@ defmodule Bio.BaseSequence do
   Calling `use Bio.BaseSequence` will generate a simple struct in the calling
   module, as well as the implementation for the `Enumerable` protocol.
 
-  Because the `Enum` module makes certain assumptions about the data that it is
-  given, we cannot trust that the functions therein will always behave how it
-  makes the most sense. As an example, there is no way to ensure that
-  `Enum.slide/3` returns anything other than a list. I believe that it makes
-  sense for it to return the enumerable type, so you would get e.g. a
-  `Bio.Sequence.DnaStrand` back.
-
-  With that said, many of the `Enum` module's functions _shouldn't_ make
-  assumptions. This is largely idiosynctratic, and so instead of trying to
-  ham-fist the `Enum` functions to work, I just wrapped them up with `Bio.Enum`.
-
-  The implementations in `Bio.Enum` rely on the `Enum` functions to work, but
-  they go the extra mile in terms of returning things that seem to make the most
-  sense. See the documentation of `Bio.Enum` for more on that.
+  The `Enum` module's functions should all work, however, take care to note
+  which of them will be given a charlist vs a code point. For more
+  clarification, see the examples in `Bio.Sequence`.
 
   This module will also cause `new/2` to be defined. This function takes a
-  sequence as well as the keywords `:label` and `:length`. For more examples of
-  using `new/2` see `Bio.Sequence.AminoAcid`, `Bio.Sequence.DnaStrand`, or
+  sequence as either a `binary()` or a `charlist()`, as well as the keywords
+  `:label` and `:length`. For more examples of using `new/2` see
+  `Bio.Sequence.AminoAcid`, `Bio.Sequence.DnaStrand`, or
   `Bio.Sequence.RnaStrand`.
   """
   defmacro __using__(_) do
@@ -33,10 +23,18 @@ defmodule Bio.BaseSequence do
       defstruct sequence: "", length: 0, label: nil, alphabet: nil, valid?: false
 
       @impl Bio.Sequential
-      def new(seq, opts \\ []) when is_binary(seq) do
+      def new(seq, opts \\ [])
+
+      def new(seq, opts) when is_binary(seq) do
+        seq
+        |> String.to_charlist()
+        |> new(opts)
+      end
+
+      def new(seq, opts) when is_list(seq) do
         [
           label: fn _ -> nil end,
-          length: &String.length(&1),
+          length: &Enum.count(&1),
           alphabet: fn _ -> nil end
         ]
         |> Enum.map(fn {key, default} ->
@@ -56,7 +54,7 @@ defmodule Bio.BaseSequence do
         @parent using_module
 
         def reduce(poly, acc, fun) do
-          do_reduce(to_str_list(poly.sequence), acc, fun)
+          do_reduce(poly.sequence, acc, fun)
         end
 
         defp do_reduce(_, {:halt, acc}, _fun) do
@@ -75,20 +73,17 @@ defmodule Bio.BaseSequence do
           do_reduce(t, fun.(h, acc), fun)
         end
 
-        defp to_str_list(obj) when is_binary(obj) do
-          obj
-          |> String.to_charlist()
-          |> Enum.map(&<<&1>>)
-        end
-
-        defp to_str_list(%@parent{sequence: obj}) do
-          obj
-          |> String.to_charlist()
-          |> Enum.map(&<<&1>>)
-        end
-
         def member?(poly, element) when is_binary(element) do
-          element_len = String.length(element)
+          element
+          |> String.to_charlist()
+          |> then(&member?(poly, &1))
+        end
+
+        # TODO: re-implement in Rust and benchmark memberships
+        # This is a pretty common task. Rust makes the CPU bound part fast, and
+        # then we can use a agent/genserver to make the parallelization easy.
+        def member?(poly, element) when is_list(element) do
+          element_len = Enum.count(element)
 
           cond do
             poly.length < element_len -> {:ok, false}
@@ -97,24 +92,12 @@ defmodule Bio.BaseSequence do
           end
         end
 
-        defp check(<<bin::binary>>, size, element) do
-          <<chunk::binary-size(size), _::binary>> = bin
-          <<_::binary-size(1), rest::binary>> = bin
-
-          cond do
-            chunk == element ->
-              {:ok, true}
-
-            true ->
-              cond do
-                String.length(rest) >= size -> check(rest, size, element)
-                true -> {:ok, false}
-              end
-          end
-        end
-
-        defp check(<<>>, _size, _element) do
-          {:ok, false}
+        defp check(sequence, size, element) do
+          sequence
+          |> Enum.chunk_every(size, 1)
+          |> Enum.map(&(&1 == element))
+          |> Enum.any?()
+          |> then(&{:ok, &1})
         end
 
         def count(poly) do
@@ -124,10 +107,7 @@ defmodule Bio.BaseSequence do
         def slice(poly) do
           {:ok, poly.length,
            fn start, amount, _step ->
-             <<_before::binary-size(start), chunk::binary-size(amount), _rest::binary>> =
-               poly.sequence
-
-             String.to_charlist(chunk)
+             Enum.slice(poly.sequence, start, amount)
            end}
         end
       end

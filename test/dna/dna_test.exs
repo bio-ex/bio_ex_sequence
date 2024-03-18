@@ -10,7 +10,7 @@ defmodule Sequence.DnaTest do
     alias Bio.Sequence.Alphabets.Dna, as: Alpha
 
     test "works on binaries (default common)" do
-      assert Subject.complement("agtc") == {:ok, "tcag"}
+      assert Subject.complement("agtc") == {:ok, ~c"tcag"}
     end
 
     test "default common and error for unknown" do
@@ -20,14 +20,14 @@ defmodule Sequence.DnaTest do
 
     test "works on binaries with another alphabet" do
       assert Subject.complement("ACGTRYSWKMBDHVNacgtryswkmbdhvn", alphabet: Alpha.iupac()) ==
-               {:ok, "TGCAYRSWMKVHDBNtgcayrswmkvhdbn"}
+               {:ok, ~c"TGCAYRSWMKVHDBNtgcayrswmkvhdbn"}
     end
 
     test "defined on DnaStrand with default common" do
       dna = DnaStrand.new("aAtTgGcC")
 
       assert Subject.complement(dna) ==
-               {:ok, %DnaStrand{sequence: "tTaAcCgG", length: 8, alphabet: Alpha.common()}}
+               {:ok, %DnaStrand{sequence: ~c"tTaAcCgG", length: 8, alphabet: Alpha.common()}}
     end
 
     test "DnaStrand defaults to included alphabet" do
@@ -36,7 +36,7 @@ defmodule Sequence.DnaTest do
       assert Subject.complement(dna) ==
                {:ok,
                 %DnaStrand{
-                  sequence: "tTaAcCgGnN",
+                  sequence: ~c"tTaAcCgGnN",
                   length: 10,
                   alphabet: Alpha.with_n()
                 }}
@@ -48,7 +48,7 @@ defmodule Sequence.DnaTest do
       assert Subject.complement(dna, alphabet: Alpha.with_n()) ==
                {:ok,
                 %DnaStrand{
-                  sequence: "tTaAcCgGnN",
+                  sequence: ~c"tTaAcCgGnN",
                   length: 10,
                   alphabet: Alpha.with_n()
                 }}

@@ -13,7 +13,7 @@ defmodule Sequence.RnaStrandTest do
       seq = Subject.new("aauuggcc", label: "rna")
 
       assert kmers(seq, 1) ==
-               {:ok, ["a", "a", "u", "u", "g", "g", "c", "c"],
+               {:ok, [~c"a", ~c"a", ~c"u", ~c"u", ~c"g", ~c"g", ~c"c", ~c"c"],
                 %{label: "rna", length: 8, alphabet: nil, valid?: false}}
     end
 
@@ -26,7 +26,7 @@ defmodule Sequence.RnaStrandTest do
       seq = Subject.new("aauuggcc", label: "rna")
 
       assert kmers(seq, 2) ==
-               {:ok, ["aa", "uu", "gg", "cc"],
+               {:ok, [~c"aa", ~c"uu", ~c"gg", ~c"cc"],
                 %{label: "rna", length: 8, alphabet: nil, valid?: false}}
     end
 
@@ -34,7 +34,7 @@ defmodule Sequence.RnaStrandTest do
       seq = Subject.new("aaauuugggccc", label: "rna")
 
       assert kmers(seq, 3) ==
-               {:ok, ["aaa", "uuu", "ggg", "ccc"],
+               {:ok, [~c"aaa", ~c"uuu", ~c"ggg", ~c"ccc"],
                 %{label: "rna", length: 12, alphabet: nil, valid?: false}}
     end
   end
@@ -49,7 +49,7 @@ defmodule Sequence.RnaStrandTest do
         |> Bio.Polymer.validate(Alpha.with_n())
 
       assert seq == %Subject{
-               sequence: "aauuggccnn",
+               sequence: ~c"aauuggccnn",
                length: 10,
                alphabet: Alpha.with_n(),
                valid?: true
@@ -70,7 +70,7 @@ defmodule Sequence.RnaStrandTest do
         |> Bio.Polymer.validate()
 
       assert seq == %Subject{
-               sequence: "aauuggcc",
+               sequence: ~c"aauuggcc",
                length: 8,
                alphabet: Alpha.common(),
                valid?: true
@@ -83,10 +83,10 @@ defmodule Sequence.RnaStrandTest do
                |> Bio.Polymer.validate()
 
       assert mismatches == [
-               {:mismatch_alpha, "n", 1},
-               {:mismatch_alpha, "t", 3},
-               {:mismatch_alpha, "k", 6},
-               {:mismatch_alpha, "x", 10}
+               {:mismatch_alpha, "n", 1, Alpha.common()},
+               {:mismatch_alpha, "t", 3, Alpha.common()},
+               {:mismatch_alpha, "k", 6, Alpha.common()},
+               {:mismatch_alpha, "x", 10, Alpha.common()}
              ]
     end
 

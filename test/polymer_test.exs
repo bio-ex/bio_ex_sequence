@@ -34,7 +34,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate()
 
       assert sequence == %DnaStrand{
-               sequence: "ttaaggcc",
+               sequence: ~c"ttaaggcc",
                length: 8,
                alphabet: DnaAlpha.common(),
                valid?: true,
@@ -48,7 +48,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate()
 
       assert sequence == %RnaStrand{
-               sequence: "uuaaggcc",
+               sequence: ~c"uuaaggcc",
                length: 8,
                alphabet: RnaAlpha.common(),
                valid?: true,
@@ -62,7 +62,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate()
 
       assert sequence == %AminoAcid{
-               sequence: "magicthegathering",
+               sequence: ~c"magicthegathering",
                length: 17,
                valid?: true,
                label: "test",
@@ -76,7 +76,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate()
 
       assert sequence == %DnaStrand{
-               sequence: "nttnaanggncc",
+               sequence: ~c"nttnaanggncc",
                length: 12,
                alphabet: DnaAlpha.with_n(),
                valid?: true,
@@ -88,10 +88,10 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate(DnaAlpha.common())
 
       assert mismatches == [
-               {:mismatch_alpha, "n", 0},
-               {:mismatch_alpha, "n", 3},
-               {:mismatch_alpha, "n", 6},
-               {:mismatch_alpha, "n", 9}
+               {:mismatch_alpha, "n", 0, DnaAlpha.common()},
+               {:mismatch_alpha, "n", 3, DnaAlpha.common()},
+               {:mismatch_alpha, "n", 6, DnaAlpha.common()},
+               {:mismatch_alpha, "n", 9, DnaAlpha.common()}
              ]
     end
 
@@ -101,7 +101,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate()
 
       assert sequence == %RnaStrand{
-               sequence: "nuunaanggncc",
+               sequence: ~c"nuunaanggncc",
                length: 12,
                alphabet: RnaAlpha.with_n(),
                valid?: true,
@@ -113,10 +113,10 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate(RnaAlpha.common())
 
       assert mismatches == [
-               {:mismatch_alpha, "n", 0},
-               {:mismatch_alpha, "n", 3},
-               {:mismatch_alpha, "n", 6},
-               {:mismatch_alpha, "n", 9}
+               {:mismatch_alpha, "n", 0, RnaAlpha.common()},
+               {:mismatch_alpha, "n", 3, RnaAlpha.common()},
+               {:mismatch_alpha, "n", 6, RnaAlpha.common()},
+               {:mismatch_alpha, "n", 9, RnaAlpha.common()}
              ]
     end
 
@@ -126,7 +126,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                |> Subject.validate()
 
       assert sequence == %AminoAcid{
-               sequence: "magicxthegathering",
+               sequence: ~c"magicxthegathering",
                length: 18,
                valid?: true,
                label: "test",
@@ -137,7 +137,7 @@ defmodule Sequence.PolymerDnaRnaTest do
                AminoAcid.new("magicxthegathering", label: "test", alphabet: AminoAlpha.iupac())
                |> Subject.validate(AminoAlpha.common())
 
-      assert mismatches == [{:mismatch_alpha, "x", 5}]
+      assert mismatches == [{:mismatch_alpha, "x", 5, AminoAlpha.common()}]
     end
   end
 

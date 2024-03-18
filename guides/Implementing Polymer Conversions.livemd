@@ -1,0 +1,89 @@
+# Implementing Polymer Conversions
+
+```elixir
+Mix.install([
+  {:bio_ex_sequence, path: "/Users/philip.capel/open_source/bio_ex_sequence"}
+])
+```
+
+## Introduction
+
+This is an introduction to the implementation of Polymer Conversions. The idea behind the architecture of the `Bio.Sequence` modules is that you should be able to define conversion logic that still uses the underlying `Bio.Polyemer` module functions, not unlike `Enum` in the standard library.
+
+Because the `Bio.Polymer` module exposes a `convert/1` function, we can use that on basically anything.
+
+The way that you would do that is straight forward, you would define a conversion module and pass it to the `convert/3` function as the keyword argument `:conversion`. For example, if we wanted to defined a mapping that converted into a compressed DNA representation, we could do:
+
+```elixir
+defmodule CompressedAminoConversion do
+  alias Bio.Sequence.DnaStrand
+
+  use Bio.Convertible do
+    def to(%DnaStrand{}), do: {:ok, &compressed/2, 1}
+  end
+
+  def compressed({:ok, knumerable, data}, _) do
+    data =
+      data
+      |> Map.drop([:length])
+      |> Map.to_list()
+
+    knumerable
+    |> Enum.map(&to_codon/1)
+    |> List.flatten()
+    |> DnaStrand.new(data)
+    |> IO.inspect(label: "what?")
+  end
+
+  defp to_codon(aa) do
+    case code_point(aa) do
+      ?a -> ~c"gcn"
+      ?r -> ~c"cgn"
+      ?n -> ~c"aay"
+      ?d -> ~c"gay"
+      ?c -> ~c"tgy"
+      ?e -> ~c"gar"
+      ?q -> ~c"car"
+      ?g -> ~c"ggn"
+      ?h -> ~c"cay"
+      ?i -> ~c"ath"
+      ?l -> ~c"ctn"
+      ?k -> ~c"aar"
+      ?m -> ~c"atg"
+      ?f -> ~c"tty"
+      ?p -> ~c"ccn"
+      ?s -> ~c"tcn"
+      ?t -> ~c"acn"
+      ?w -> ~c"tgg"
+      ?y -> ~c"tay"
+      ?v -> ~c"gtn"
+    end
+  end
+
+  defp code_point([p]), do: p
+end
+```
+
+This is made possible because of the simple implementation of the
+  `Bio.Polymeric` interface for the `Bio.Sequence.AminoAcid`. If
+  you want to define your own convertible polymer types, you can. It requires
+  defining the module and the implementation of `convert/1`. You can read the
+  `Bio.Sequence.AminoAcid` source for more clarity on the details.
+
+This package attempts to define reasonable defaults for all the occasions
+  which it can. This includes converting DNA into RNA, and RNA to DNA. The
+  conversions from DNA/RNA to Amino Acid are done using standard codon tables.
+The Conversion module idea is provided as an escape hatch for more particular
+  applications which may require bespoke logic. An example would be converting
+  Amino Acids into a DNA sequence, as above. There are likely more use cases
+  than I could possibly compile on my own, so I tried to come up with a way to
+  alleviate that pressure.e MyConverter do
+end
+
+```elixir
+alias Bio.Sequence.AminoAcid
+
+amino = AminoAcid.new("maktg", label: "polypeptide-∂")
+Bio.Polymer.convert(amino, DnaStrand, conversion: CompressedAminoConversion)
+#      {:ok, %DnaStrand{sequence: ~c"atggcnaaracnggn", length: 15, label: "polypeptide-∂"}}
+```

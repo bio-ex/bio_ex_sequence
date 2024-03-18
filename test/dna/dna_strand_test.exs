@@ -13,7 +13,7 @@ defmodule Sequence.DnaStrandTest do
       seq = Subject.new("tagct", label: "dna")
 
       assert kmers(seq, 1) ==
-               {:ok, ["t", "a", "g", "c", "t"],
+               {:ok, [~c"t", ~c"a", ~c"g", ~c"c", ~c"t"],
                 %{label: "dna", length: 5, alphabet: nil, valid?: false}}
     end
 
@@ -26,7 +26,7 @@ defmodule Sequence.DnaStrandTest do
       seq = Subject.new("ttaaggcc", label: "dna")
 
       assert kmers(seq, 2) ==
-               {:ok, ["tt", "aa", "gg", "cc"],
+               {:ok, [~c"tt", ~c"aa", ~c"gg", ~c"cc"],
                 %{label: "dna", length: 8, alphabet: nil, valid?: false}}
     end
 
@@ -34,7 +34,7 @@ defmodule Sequence.DnaStrandTest do
       seq = Subject.new("tttaaagggccc", label: "dna")
 
       assert kmers(seq, 3) ==
-               {:ok, ["ttt", "aaa", "ggg", "ccc"],
+               {:ok, [~c"ttt", ~c"aaa", ~c"ggg", ~c"ccc"],
                 %{label: "dna", length: 12, alphabet: nil, valid?: false}}
     end
   end
@@ -49,7 +49,7 @@ defmodule Sequence.DnaStrandTest do
         |> Bio.Polymer.validate(Alpha.with_n())
 
       assert seq == %Subject{
-               sequence: "aattggccnn",
+               sequence: ~c"aattggccnn",
                length: 10,
                alphabet: Alpha.with_n(),
                valid?: true
@@ -70,7 +70,7 @@ defmodule Sequence.DnaStrandTest do
         |> Bio.Polymer.validate()
 
       assert seq == %Subject{
-               sequence: "aattggcc",
+               sequence: ~c"aattggcc",
                length: 8,
                alphabet: Alpha.common(),
                valid?: true

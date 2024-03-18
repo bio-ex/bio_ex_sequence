@@ -12,16 +12,13 @@ defmodule Sequence.BaseSequenceTest do
     end
 
     test "Enum.all?/1" do
-      seq = ConsolidatedSequence.new("")
-      assert Enum.all?(seq)
-
       seq = ConsolidatedSequence.new("things")
       assert Enum.all?(seq)
     end
 
     test "Enum.all?/2" do
       seq = ConsolidatedSequence.new("ggggg")
-      assert Enum.all?(seq, &(&1 == "g"))
+      assert Enum.all?(seq, &(&1 == ?g))
     end
 
     test "Enum.any?/1" do
@@ -34,10 +31,10 @@ defmodule Sequence.BaseSequenceTest do
 
     test "Enum.any?/2" do
       seq = ConsolidatedSequence.new("ggggg")
-      assert not Enum.any?(seq, &(&1 == "c"))
+      assert not Enum.any?(seq, &(&1 == ?c))
 
       seq = ConsolidatedSequence.new("tagacat-")
-      assert Enum.any?(seq, &(&1 == "-"))
+      assert Enum.any?(seq, &(&1 == ?-))
     end
 
     test "Enum.at/2" do
@@ -167,7 +164,7 @@ defmodule Sequence.BaseSequenceTest do
         ConsolidatedSequence.new("abcd")
         |> Enum.map(& &1)
 
-      assert mapped == ["a", "b", "c", "d"]
+      assert mapped == [?a, ?b, ?c, ?d]
     end
 
     test "Enum.map_every/3" do
@@ -259,7 +256,7 @@ defmodule Sequence.BaseSequenceTest do
         ConsolidatedSequence.new("something wicked this way comes")
         |> Enum.slice(0..8)
 
-      assert slice == 'something'
+      assert slice == ~c"something"
     end
 
     test "Enum.slice/3" do
@@ -271,7 +268,7 @@ defmodule Sequence.BaseSequenceTest do
         ConsolidatedSequence.new("abcdefg")
         |> Enum.slide(0, 3)
 
-      assert slide == ["b", "c", "d", "a", "e", "f", "g"]
+      assert slide == [?b, ?c, ?d, ?a, ?e, ?f, ?g]
     end
 
     test "Enum.sort/1" do

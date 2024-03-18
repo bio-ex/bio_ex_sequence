@@ -14,14 +14,14 @@ defmodule Sequence.RnaDoubleStrandTest do
       assert kmers(seq, 1) ==
                {:ok,
                 [
-                  {"a", "u"},
-                  {"a", "u"},
-                  {"u", "a"},
-                  {"u", "a"},
-                  {"g", "c"},
-                  {"g", "c"},
-                  {"c", "g"},
-                  {"c", "g"}
+                  {~c"a", ~c"u"},
+                  {~c"a", ~c"u"},
+                  {~c"u", ~c"a"},
+                  {~c"u", ~c"a"},
+                  {~c"g", ~c"c"},
+                  {~c"g", ~c"c"},
+                  {~c"c", ~c"g"},
+                  {~c"c", ~c"g"}
                 ], %{label: "rna", complement_offset: 0}}
     end
 
@@ -36,10 +36,10 @@ defmodule Sequence.RnaDoubleStrandTest do
       assert kmers(seq, 2) ==
                {:ok,
                 [
-                  {"aa", "uu"},
-                  {"uu", "aa"},
-                  {"gg", "cc"},
-                  {"cc", "gg"}
+                  {~c"aa", ~c"uu"},
+                  {~c"uu", ~c"aa"},
+                  {~c"gg", ~c"cc"},
+                  {~c"cc", ~c"gg"}
                 ], %{label: "rna", complement_offset: 0}}
     end
 
@@ -49,10 +49,10 @@ defmodule Sequence.RnaDoubleStrandTest do
       assert kmers(seq, 3) ==
                {:ok,
                 [
-                  {"aaa", "uuu"},
-                  {"uuu", "aaa"},
-                  {"ggg", "ccc"},
-                  {"ccc", "ggg"}
+                  {~c"aaa", ~c"uuu"},
+                  {~c"uuu", ~c"aaa"},
+                  {~c"ggg", ~c"ccc"},
+                  {~c"ccc", ~c"ggg"}
                 ], %{label: "rna", complement_offset: 0}}
     end
 
@@ -62,10 +62,10 @@ defmodule Sequence.RnaDoubleStrandTest do
       assert kmers(seq, 3) ==
                {:ok,
                 [
-                  {"aaa", "   "},
-                  {"uuu", "aaa"},
-                  {"ggg", "ccc"},
-                  {"ccc", "ggg"}
+                  {~c"aaa", [nil, nil, nil]},
+                  {~c"uuu", ~c"aaa"},
+                  {~c"ggg", ~c"ccc"},
+                  {~c"ccc", ~c"ggg"}
                 ], %{label: "rna", complement_offset: 3}}
     end
 
@@ -80,11 +80,11 @@ defmodule Sequence.RnaDoubleStrandTest do
       assert kmers(seq, 3) ==
                {:ok,
                 [
-                  {"ttt", "   "},
-                  {"aaa", "ttt"},
-                  {"ggg", "ccc"},
-                  {"ccc", "ggg"},
-                  {"   ", "atg"}
+                  {~c"ttt", [nil, nil, nil]},
+                  {~c"aaa", ~c"ttt"},
+                  {~c"ggg", ~c"ccc"},
+                  {~c"ccc", ~c"ggg"},
+                  {[nil, nil, nil], ~c"atg"}
                 ], %{label: "dna", complement_offset: 3}}
     end
   end
@@ -103,14 +103,14 @@ defmodule Sequence.RnaDoubleStrandTest do
                bottom_strand: %RnaStrand{
                  alphabet: Alpha.with_n(),
                  length: 10,
-                 sequence: "uuaaccggnn",
+                 sequence: ~c"uuaaccggnn",
                  valid?: true
                },
                complement_offset: 0,
                top_strand: %RnaStrand{
                  alphabet: Alpha.with_n(),
                  length: 10,
-                 sequence: "aauuggccnn",
+                 sequence: ~c"aauuggccnn",
                  valid?: true
                },
                valid?: true,
@@ -139,13 +139,13 @@ defmodule Sequence.RnaDoubleStrandTest do
 
       assert seq == %Subject{
                top_strand: %RnaStrand{
-                 sequence: "aauuggcc",
+                 sequence: ~c"aauuggcc",
                  length: 8,
                  alphabet: Alpha.common(),
                  valid?: true
                },
                bottom_strand: %RnaStrand{
-                 sequence: "uuaaccgg",
+                 sequence: ~c"uuaaccgg",
                  length: 8,
                  alphabet: Alpha.common(),
                  valid?: true

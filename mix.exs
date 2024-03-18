@@ -94,19 +94,18 @@ defmodule Bio.Sequence.MixProject do
           Bio.Sequential,
           Bio.Convertible
         ],
-        Utilities: [
-          Bio.Enum,
+        Protocols: [
           Bio.Polymeric
-        ],
-        Internal: [
-          Bio.AcidHelper
         ]
       ]
     ]
   end
 
   def extras() do
-    []
+    [
+      "./guides/Implementing Polymeric Types.livemd",
+      "./guides/Implementing Polymer Conversions.livemd"
+    ]
   end
 
   defp group_for_function(group), do: {String.to_atom(group), &(&1[:group] == group)}
