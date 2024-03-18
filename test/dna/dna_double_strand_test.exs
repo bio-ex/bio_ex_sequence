@@ -1,9 +1,60 @@
 defmodule Sequence.DnaDoubleStrandTest do
   use ExUnit.Case, async: true
 
+  require Bio.Sequence
+  import Bio.Sequence, only: [sigil_f: 2]
   alias Bio.Sequence.DnaDoubleStrand, as: Subject
 
   doctest Subject
+
+  describe "constructing a complement" do
+    # TODO: is there a fun way we could define a macro that would insert test
+    # functions into the module's runtime scope to allow them to access private
+    # functions? This would be something similar to https://github.com/pragdave/private
+    # except that this wouldn't affect the actual code, which is IMO a bad
+    # pattern as it affects the artifact output for production. I would want the
+    # dependency to be dev/test only.
+    # The test file might need to try and control the compilation order at that
+    # point though, which is a fairly classic example of making the problem
+    # harder to suit a relatively unimportant design goal. The `private` lib is
+    # actually not a bad approach if that ends up being necessary.
+    test "positive bottom offset works" do
+      assert Subject.construct_complement(~f"attgatc", [], {0, 2}) ==
+               {~f"attgatc", ~f"taact--"}
+
+      assert Subject.construct_complement(~c"attgatc", [], {0, 10}) ==
+               {~c"attgatc", ~f"-------"}
+    end
+
+    test "negative bottom offset works" do
+      assert Subject.construct_complement(~c"attgatc", [], {0, -2}) ==
+               {~c"attgatc", ~f"--actag"}
+
+      assert Subject.construct_complement(~c"attgatc", [], {0, -10}) ==
+               {~c"attgatc", ~f"-------"}
+    end
+
+    test "positive top offset works" do
+      assert Subject.construct_complement([], ~c"attgatc", {2, 0}) ==
+               {~f"--actag", ~c"attgatc"}
+
+      assert Subject.construct_complement([], ~c"attgatc", {20, 0}) ==
+               {~f"-------", ~c"attgatc"}
+    end
+
+    test "negative top offset works" do
+      assert Subject.construct_complement([], ~c"attgatc", {-2, 0}) ==
+               {~f"taact  ", ~f'attgatc'}
+
+      assert Subject.construct_complement([], ~c"attgatc", {-10, 0}) ==
+               {~f"-------", ~f'attgatc'}
+    end
+
+    test "what if I do both?" do
+      assert Subject.construct_complement(~f"--taggattag--", [], {2, 4}) ==
+               {~c"attgatc", ~f"" }
+    end
+  end
 
   describe "polymeric kmers" do
     import Bio.Polymeric, only: [kmers: 2]
